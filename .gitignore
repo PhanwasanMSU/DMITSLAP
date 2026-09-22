@@ -1,0 +1,21 @@
+# Node
+server/node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+
+# OS
+Thumbs.db
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Temporary
+*.tmp
+*.temp

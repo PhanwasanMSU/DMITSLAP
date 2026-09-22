@@ -1,279 +1,398 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>D.M.I.T Slap War</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="style.css">
+    <title>D.M.I.T SLAP WAR</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
 
 <body>
 
-    <!-- =========================
-         LOBBY
-    ========================== -->
-    <section id="lobbyScreen" class="screen">
+    <!-- ================================= -->
+    <!-- LOBBY -->
+    <!-- ================================= -->
+
+    <section
+        id="lobby"
+        class="screen active"
+    >
 
         <div class="logo">
-            <div>D.M.I.T</div>
-            <span>SLAP WAR</span>
+
+            <div class="logo-main">
+                D.M.I.T
+            </div>
+
+            <div class="logo-sub">
+                SLAP WAR
+            </div>
+
         </div>
 
         <div class="panel">
 
             <input
-                id="nameInput"
-                maxlength="14"
+                id="playerName"
+                type="text"
+                maxlength="16"
                 placeholder="ชื่อผู้เล่น"
             >
 
-            <div class="row">
+            <div class="two-buttons">
 
-                <button id="createBtn" class="primary">
+                <button
+                    id="createRoomBtn"
+                    class="primary"
+                >
                     สร้างห้อง
                 </button>
 
-                <button id="joinBtn">
+                <button
+                    id="joinRoomBtn"
+                >
                     เข้าห้อง
                 </button>
 
             </div>
 
-            <div class="join-row">
+            <div class="room-row">
 
                 <input
-                    id="roomInput"
-                    maxlength="4"
+                    id="roomCode"
+                    type="text"
+                    maxlength="5"
                     placeholder="รหัสห้อง"
                 >
 
-                <button id="copyBtn">
+                <button id="copyRoomBtn">
                     COPY
                 </button>
 
             </div>
 
-            <p id="connectionText" class="muted">
+            <div
+                id="connectionStatus"
+                class="connection"
+            >
                 กำลังเชื่อมต่อ...
-            </p>
+            </div>
 
         </div>
 
     </section>
 
 
-    <!-- =========================
-         ROOM
-    ========================== -->
-    <section id="roomScreen" class="screen hidden">
+    <!-- ================================= -->
+    <!-- ROOM -->
+    <!-- ================================= -->
 
-        <div class="room-head">
+    <section
+        id="roomScreen"
+        class="screen"
+    >
+
+        <div class="top-title">
 
             <div>
-
-                <h2>
-                    ห้อง
-                    <span id="roomCode">----</span>
-                </h2>
-
-                <p class="muted">
-                    ต้องมีผู้เล่น 4 คน และทุกคนกดพร้อม
-                </p>
-
+                D.M.I.T
+                <span>SLAP WAR</span>
             </div>
 
-            <button id="leaveRoomBtn">
+            <button
+                id="leaveRoomBtn"
+                class="danger"
+            >
                 ออกจากห้อง
             </button>
 
         </div>
 
+        <div class="room-panel">
 
-        <div id="playerList" class="player-list"></div>
+            <div class="room-code-box">
 
+                <div>
+                    รหัสห้อง
+                </div>
 
-        <div class="room-actions">
+                <strong id="currentRoomCode">
+                    -----
+                </strong>
 
-            <button id="readyBtn" class="primary">
-                พร้อม
-            </button>
+            </div>
 
-            <button id="startBtn" class="hidden">
-                เริ่มเกม
-            </button>
+            <h2>
+                ผู้เล่น
+            </h2>
 
-        </div>
+            <div
+                id="playerList"
+                class="player-list"
+            >
+            </div>
 
+            <div class="room-actions">
 
-        <div class="rules">
+                <button
+                    id="readyBtn"
+                    class="primary"
+                >
+                    READY
+                </button>
 
-            <b>กติกาเบื้องต้น</b>
+                <button
+                    id="startGameBtn"
+                    class="start"
+                >
+                    START GAME
+                </button>
 
-            <ul>
+            </div>
 
-                <li>
-                    ผู้เล่น 4 คน
-                </li>
-
-                <li>
-                    คนละ 13 ใบ
-                </li>
-
-                <li>
-                    ผู้ถือ 3♣ เริ่มเกม
-                </li>
-
-                <li>
-                    ลงไพ่จำนวนเท่ากันและแต้มสูงกว่า
-                </li>
-
-                <li>
-                    สามารถ PASS ได้
-                </li>
-
-                <li>
-                    สามารถ SLAP ได้ตามเงื่อนไข
-                </li>
-
-                <li>
-                    คนที่ไพ่หมดมือก่อนเป็นผู้ชนะ
-                </li>
-
-            </ul>
+            <div
+                id="roomMessage"
+                class="room-message"
+            >
+                รอผู้เล่น...
+            </div>
 
         </div>
 
     </section>
 
 
-    <!-- =========================
-         GAME
-    ========================== -->
-    <section id="gameScreen" class="game hidden">
+    <!-- ================================= -->
+    <!-- GAME -->
+    <!-- ================================= -->
 
+    <section
+        id="gameScreen"
+        class="screen game-screen"
+    >
 
         <!-- TOP BAR -->
 
-        <div class="topbar">
+        <header class="game-header">
 
-            <button id="gameLeaveBtn">
-                ออก
-            </button>
-
-            <div class="title-small">
+            <div class="game-logo">
                 D.M.I.T
-                <b>SLAP WAR</b>
+                <span>SLAP WAR</span>
             </div>
 
-            <div class="status">
+            <div class="game-info">
 
-                <span id="turnText">
-                    รอ...
-                </span>
+                <div>
+                    ห้อง:
+                    <strong id="gameRoomCode">
+                        -----
+                    </strong>
+                </div>
 
-                <span id="timer">
-                    20
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <!-- PLAYERS -->
-
-        <div
-            class="player p1"
-            id="player0">
-        </div>
-
-        <div
-            class="player p2"
-            id="player1">
-        </div>
-
-        <div
-            class="player p3"
-            id="player2">
-        </div>
-
-        <div
-            class="player p4"
-            id="player3">
-        </div>
-
-
-        <!-- CENTER ARENA -->
-
-        <main class="arena">
-
-            <div class="pile-info">
-
-                <span id="trickText">
-                    เริ่มเกม
-                </span>
-
-                <span id="pileCount">
-                    กอง 0
-                </span>
+                <div>
+                    เวลา:
+                    <strong id="turnTimer">
+                        30
+                    </strong>
+                </div>
 
             </div>
 
+        </header>
+
+
+        <!-- GAME TABLE -->
+
+        <main class="game-table">
+
+            <!-- PLAYER 1 -->
 
             <div
-                id="playedCards"
-                class="played-cards">
+                id="playerTop"
+                class="player player-top"
+            >
+
+                <div class="avatar">
+                    P1
+                </div>
+
+                <div class="player-info">
+
+                    <strong class="player-name">
+                        Player
+                    </strong>
+
+                    <span class="card-count">
+                        13 ใบ
+                    </span>
+
+                </div>
+
+                <div class="turn-dot">
+                </div>
+
             </div>
 
 
-            <div id="effectLayer"></div>
+            <!-- PLAYER 2 -->
+
+            <div
+                id="playerLeft"
+                class="player player-left"
+            >
+
+                <div class="avatar">
+                    P2
+                </div>
+
+                <div class="player-info">
+
+                    <strong class="player-name">
+                        Player
+                    </strong>
+
+                    <span class="card-count">
+                        13 ใบ
+                    </span>
+
+                </div>
+
+                <div class="turn-dot">
+                </div>
+
+            </div>
+
+
+            <!-- PLAYER 3 -->
+
+            <div
+                id="playerRight"
+                class="player player-right"
+            >
+
+                <div class="avatar">
+                    P3
+                </div>
+
+                <div class="player-info">
+
+                    <strong class="player-name">
+                        Player
+                    </strong>
+
+                    <span class="card-count">
+                        13 ใบ
+                    </span>
+
+                </div>
+
+                <div class="turn-dot">
+                </div>
+
+            </div>
+
+
+            <!-- CENTER -->
+
+            <div class="arena">
+
+                <div class="arena-title">
+                    SLAP WAR
+                </div>
+
+                <div
+                    id="pile"
+                    class="pile"
+                >
+                </div>
+
+                <div
+                    id="pileInfo"
+                    class="pile-info"
+                >
+                    เริ่มเกมด้วย 3♣
+                </div>
+
+                <div
+                    id="gameMessage"
+                    class="game-message"
+                >
+                </div>
+
+            </div>
 
         </main>
 
 
         <!-- PLAYER HAND -->
 
-        <div class="my-area">
+        <section class="bottom-panel">
 
-            <div class="hand-title">
+            <div
+                id="myPlayerInfo"
+                class="my-player-info"
+            >
 
-                <span>
-                    ไพ่ของฉัน
-                    <b id="handCount">
-                        13
-                    </b>
-                </span>
+                <div class="my-avatar">
+                    ME
+                </div>
 
-                <span id="hint"></span>
+                <div>
+
+                    <strong id="myName">
+                        Player
+                    </strong>
+
+                    <span id="myCardCount">
+                        13 ใบ
+                    </span>
+
+                </div>
 
             </div>
 
 
             <div
                 id="hand"
-                class="hand">
+                class="hand"
+            >
             </div>
 
 
             <!-- ACTION BUTTONS -->
 
-            <div class="actions">
+            <div class="action-bar">
 
-                <button id="passBtn">
+                <button
+                    id="passBtn"
+                    class="action pass"
+                >
                     PASS
                 </button>
 
                 <button
                     id="playBtn"
-                    class="primary">
+                    class="action play"
+                >
                     PLAY
                 </button>
 
                 <button
                     id="slapBtn"
-                    class="danger">
+                    class="action slap"
+                >
                     SLAP!
                 </button>
 
@@ -284,55 +403,76 @@
 
             <div class="emotes">
 
-                <button data-emote="😂">
+                <button data-emoji="😂">
                     😂
                 </button>
 
-                <button data-emote="😎">
+                <button data-emoji="😎">
                     😎
                 </button>
 
-                <button data-emote="😭">
+                <button data-emoji="😭">
                     😭
                 </button>
 
-                <button data-emote="🔥">
+                <button data-emoji="😡">
+                    😡
+                </button>
+
+                <button data-emoji="😱">
+                    😱
+                </button>
+
+                <button data-emoji="🤡">
+                    🤡
+                </button>
+
+                <button data-emoji="🔥">
                     🔥
                 </button>
 
-                <button data-emote="🤡">
-                    🤡
+                <button data-emoji="💀">
+                    💀
+                </button>
+
+                <button data-emoji="👏">
+                    👏
                 </button>
 
             </div>
 
-        </div>
+        </section>
 
     </section>
 
 
-    <!-- =========================
-         RESULT
-    ========================== -->
+    <!-- ================================= -->
+    <!-- RESULT -->
+    <!-- ================================= -->
 
     <div
         id="resultModal"
-        class="modal hidden">
+        class="modal"
+    >
 
-        <div class="modal-box">
+        <div class="result-box">
 
-            <h1 id="resultTitle">
-                WINNER!
-            </h1>
+            <div class="result-small">
+                GAME OVER
+            </div>
 
-            <p id="resultText"></p>
+            <div
+                id="winnerText"
+                class="winner-text"
+            >
+                WINNER
+            </div>
 
             <button
-                id="backLobbyBtn"
-                class="primary">
-
-                กลับ Lobby
-
+                id="backRoomBtn"
+                class="primary"
+            >
+                กลับห้อง
             </button>
 
         </div>
@@ -340,19 +480,24 @@
     </div>
 
 
+    <!-- TOAST -->
+
+    <div id="toast">
+    </div>
+
+
     <!-- SOCKET.IO -->
 
     <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
 
-
-    <!-- SERVER URL -->
+    <!-- CONFIG -->
 
     <script src="config.js"></script>
 
-
     <!-- GAME -->
 
-    <script src="game.js"></script>
+    <script src="app.js"></script>
 
 </body>
+
 </html>
