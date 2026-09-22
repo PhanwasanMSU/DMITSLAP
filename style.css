@@ -1,0 +1,1227 @@
+* {
+    box-sizing: border-box;
+}
+
+
+html,
+body {
+
+    margin: 0;
+
+    min-height: 100%;
+
+    font-family:
+        Tahoma,
+        Arial,
+        sans-serif;
+
+    background: #080b12;
+
+    color: white;
+
+}
+
+
+button,
+input {
+
+    font: inherit;
+
+}
+
+
+button {
+
+    border: 0;
+
+    border-radius: 12px;
+
+    padding: 11px 18px;
+
+    background: #202938;
+
+    color: white;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition: 0.15s;
+
+}
+
+
+button:hover {
+
+    transform:
+        translateY(-1px);
+
+    filter:
+        brightness(1.15);
+
+}
+
+
+button:disabled {
+
+    opacity: 0.4;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+}
+
+
+.primary {
+
+    background:
+        linear-gradient(
+            135deg,
+            #1677ff,
+            #7c4dff
+        );
+
+}
+
+
+.danger {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff304f,
+            #ff7b00
+        );
+
+}
+
+
+.hidden {
+
+    display: none !important;
+
+}
+
+
+/* =====================================
+   LOBBY
+===================================== */
+
+.screen {
+
+    min-height: 100vh;
+
+    padding: 30px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+}
+
+
+.logo {
+
+    text-align: center;
+
+    font-size: 56px;
+
+    font-weight: 1000;
+
+    letter-spacing: 4px;
+
+    text-shadow:
+        0 8px 30px #000;
+
+}
+
+
+.logo span {
+
+    display: block;
+
+    font-size: 28px;
+
+    color: #ff4766;
+
+    letter-spacing: 8px;
+
+}
+
+
+.panel {
+
+    width:
+        min(430px, 95vw);
+
+    margin-top: 30px;
+
+    padding: 25px;
+
+    border:
+        1px solid #30394c;
+
+    border-radius: 22px;
+
+    background: #111722;
+
+    box-shadow:
+        0 20px 70px #0008;
+
+}
+
+
+.panel input,
+.join-row input {
+
+    width: 100%;
+
+    background: #080c14;
+
+    color: white;
+
+    border:
+        1px solid #364158;
+
+    border-radius: 12px;
+
+    padding: 13px;
+
+    margin-bottom: 12px;
+
+    outline: none;
+
+}
+
+
+.row {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 10px;
+
+}
+
+
+.join-row {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr auto;
+
+    gap: 8px;
+
+    margin-top: 10px;
+
+}
+
+
+.join-row input {
+
+    margin: 0;
+
+    text-transform:
+        uppercase;
+
+}
+
+
+.muted {
+
+    color: #9da7bb;
+
+}
+
+
+/* =====================================
+   ROOM
+===================================== */
+
+.room-head {
+
+    width:
+        min(1000px, 95vw);
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+}
+
+
+.player-list {
+
+    width:
+        min(1000px, 95vw);
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 14px;
+
+    margin: 25px 0;
+
+}
+
+
+.slot {
+
+    background: #111722;
+
+    border:
+        1px solid #30394c;
+
+    border-radius: 18px;
+
+    padding: 20px;
+
+    min-height: 150px;
+
+}
+
+
+.slot .avatar {
+
+    font-size: 42px;
+
+}
+
+
+.ready {
+
+    color: #54e38e;
+
+}
+
+
+.notready {
+
+    color: #ffbd4a;
+
+}
+
+
+.room-actions {
+
+    display: flex;
+
+    gap: 10px;
+
+}
+
+
+.rules {
+
+    width:
+        min(1000px, 95vw);
+
+    margin-top: 25px;
+
+    background: #0f141e;
+
+    border:
+        1px solid #293246;
+
+    padding: 18px 25px;
+
+    border-radius: 18px;
+
+    color: #b9c1d0;
+
+}
+
+
+.rules li {
+
+    margin: 7px 0;
+
+}
+
+
+/* =====================================
+   GAME
+===================================== */
+
+.game {
+
+    position: relative;
+
+    min-height: 100vh;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 50% 45%,
+            #253452 0,
+            #111a29 30%,
+            #070a10 75%
+        );
+
+}
+
+
+/* =====================================
+   TOP BAR
+===================================== */
+
+.topbar {
+
+    position: absolute;
+
+    top: 12px;
+
+    left: 12px;
+
+    right: 12px;
+
+    z-index: 20;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content:
+        space-between;
+
+}
+
+
+.title-small {
+
+    font-size: 20px;
+
+    letter-spacing: 2px;
+
+}
+
+
+.title-small b {
+
+    color: #ff4766;
+
+}
+
+
+.status {
+
+    display: flex;
+
+    gap: 12px;
+
+    align-items: center;
+
+    background: #111827dd;
+
+    border:
+        1px solid #34415a;
+
+    border-radius: 14px;
+
+    padding: 8px 13px;
+
+}
+
+
+.status #timer {
+
+    font-size: 22px;
+
+    min-width: 32px;
+
+    text-align: center;
+
+    color: #ffd166;
+
+}
+
+
+/* =====================================
+   PLAYERS
+===================================== */
+
+.player {
+
+    position: absolute;
+
+    z-index: 10;
+
+    width: 180px;
+
+    min-height: 76px;
+
+    padding: 12px;
+
+    border-radius: 18px;
+
+    background: #111827e8;
+
+    border:
+        1px solid #36445d;
+
+    box-shadow:
+        0 10px 30px #0007;
+
+}
+
+
+.player.active {
+
+    border-color:
+        #4d9cff;
+
+    box-shadow:
+        0 0 25px
+        #1677ff55;
+
+}
+
+
+.player.dead {
+
+    opacity: 0.45;
+
+}
+
+
+.p1 {
+
+    top: 55px;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+}
+
+
+.p2 {
+
+    left: 20px;
+
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+}
+
+
+.p3 {
+
+    right: 20px;
+
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+}
+
+
+.p4 {
+
+    bottom: 170px;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+}
+
+
+.avatarline {
+
+    display: flex;
+
+    gap: 10px;
+
+    align-items: center;
+
+}
+
+
+.avatar {
+
+    font-size: 32px;
+
+}
+
+
+.pname {
+
+    font-weight: 900;
+
+}
+
+
+.count {
+
+    font-size: 12px;
+
+    color: #9da7bb;
+
+    margin-top: 5px;
+
+}
+
+
+.badge {
+
+    font-size: 10px;
+
+    background: #2a3952;
+
+    padding: 3px 7px;
+
+    border-radius: 8px;
+
+    margin-left: 4px;
+
+}
+
+
+/* =====================================
+   ARENA
+===================================== */
+
+.arena {
+
+    position: absolute;
+
+    left: 50%;
+
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    width:
+        min(650px, 65vw);
+
+    height:
+        min(390px, 45vh);
+
+    border:
+        1px solid #33435f;
+
+    background:
+        linear-gradient(
+            135deg,
+            #18263d,
+            #0d1626
+        );
+
+    clip-path:
+        polygon(
+            50% 0,
+            100% 50%,
+            50% 100%,
+            0 50%
+        );
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    box-shadow:
+        inset 0 0 80px #0008,
+        0 20px 70px #0009;
+
+}
+
+
+.pile-info {
+
+    position: absolute;
+
+    top: 26px;
+
+    display: flex;
+
+    gap: 18px;
+
+    color: #aeb8c9;
+
+    font-size: 13px;
+
+}
+
+
+.played-cards {
+
+    display: flex;
+
+    gap: 7px;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    width: 60%;
+
+    min-height: 100px;
+
+}
+
+
+/* =====================================
+   CARD
+===================================== */
+
+.card {
+
+    width: 58px;
+
+    height: 80px;
+
+    border-radius: 8px;
+
+    background: #f7f7f4;
+
+    color: #111;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content:
+        space-between;
+
+    padding: 6px;
+
+    font-weight: 900;
+
+    box-shadow:
+        0 6px 14px #0008;
+
+    user-select: none;
+
+    position: relative;
+
+}
+
+
+.card.red {
+
+    color: #d6273f;
+
+}
+
+
+.card .rank {
+
+    font-size: 22px;
+
+}
+
+
+.card .suit {
+
+    font-size: 20px;
+
+    text-align: center;
+
+}
+
+
+/* =====================================
+   PLAYER HAND
+===================================== */
+
+.my-area {
+
+    position: absolute;
+
+    z-index: 20;
+
+    left: 0;
+
+    right: 0;
+
+    bottom: 10px;
+
+    text-align: center;
+
+}
+
+
+.hand-title {
+
+    width:
+        min(900px, 90vw);
+
+    margin: auto;
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    color: #d5dbea;
+
+    font-size: 13px;
+
+}
+
+
+.hand-title b {
+
+    color: #7db6ff;
+
+}
+
+
+.hand {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: flex-end;
+
+    min-height: 120px;
+
+    padding: 0 20px;
+
+    overflow-x: auto;
+
+}
+
+
+.hand .card {
+
+    margin-left: -8px;
+
+    cursor: pointer;
+
+    transition: 0.15s;
+
+}
+
+
+.hand .card:first-child {
+
+    margin-left: 0;
+
+}
+
+
+.hand .card:hover {
+
+    transform:
+        translateY(-14px);
+
+}
+
+
+.hand .card.selected {
+
+    transform:
+        translateY(-24px);
+
+    outline:
+        3px solid #ffd166;
+
+}
+
+
+/* =====================================
+   ACTION BUTTONS
+===================================== */
+
+.actions {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    margin-top: 8px;
+
+}
+
+
+.emotes {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 5px;
+
+    margin-top: 5px;
+
+}
+
+
+.emotes button {
+
+    padding: 5px 9px;
+
+    background: #151d2b;
+
+}
+
+
+/* =====================================
+   EMOTE EFFECT
+===================================== */
+
+.pop-emote {
+
+    position: absolute;
+
+    z-index: 50;
+
+    font-size: 55px;
+
+    animation:
+        pop 1.3s ease forwards;
+
+    pointer-events: none;
+
+}
+
+
+@keyframes pop {
+
+    0% {
+
+        transform:
+            scale(0.3);
+
+        opacity: 0;
+
+    }
+
+    20% {
+
+        transform:
+            scale(1.1);
+
+        opacity: 1;
+
+    }
+
+    100% {
+
+        transform:
+            translateY(-100px)
+            scale(1);
+
+        opacity: 0;
+
+    }
+
+}
+
+
+/* =====================================
+   SLAP SHAKE
+===================================== */
+
+.shake {
+
+    animation:
+        shake 0.35s;
+
+}
+
+
+@keyframes shake {
+
+    0%,
+    100% {
+
+        transform:
+            translate(
+                -50%,
+                -50%
+            );
+
+    }
+
+    25% {
+
+        transform:
+            translate(
+                calc(-50% - 8px),
+                -50%
+            );
+
+    }
+
+    75% {
+
+        transform:
+            translate(
+                calc(-50% + 8px),
+                -50%
+            );
+
+    }
+
+}
+
+
+/* =====================================
+   TOAST
+===================================== */
+
+#toast {
+
+    position: fixed;
+
+    z-index: 100;
+
+    top: 18px;
+
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+    background: #111827;
+
+    border:
+        1px solid #40516e;
+
+    border-radius: 12px;
+
+    padding: 10px 16px;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transition: 0.2s;
+
+}
+
+
+#toast.show {
+
+    opacity: 1;
+
+}
+
+
+/* =====================================
+   RESULT MODAL
+===================================== */
+
+.modal {
+
+    position: fixed;
+
+    inset: 0;
+
+    background: #000b;
+
+    z-index: 200;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+}
+
+
+.modal-box {
+
+    background: #111722;
+
+    border:
+        1px solid #40516e;
+
+    border-radius: 24px;
+
+    padding: 35px;
+
+    text-align: center;
+
+    min-width: 300px;
+
+    box-shadow:
+        0 30px 100px #000;
+
+}
+
+
+.modal-box h1 {
+
+    font-size: 42px;
+
+    color: #ffd166;
+
+}
+
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media (max-width: 800px) {
+
+    .player {
+
+        width: 145px;
+
+    }
+
+
+    .p2 {
+
+        left: 5px;
+
+    }
+
+
+    .p3 {
+
+        right: 5px;
+
+    }
+
+
+    .arena {
+
+        width: 75vw;
+
+        height: 38vh;
+
+    }
+
+
+    .card {
+
+        width: 48px;
+
+        height: 68px;
+
+    }
+
+
+    .hand .card {
+
+        margin-left: -18px;
+
+    }
+
+
+    .player-list {
+
+        grid-template-columns:
+            1fr 1fr;
+
+    }
+
+}
+
+
+@media (max-width: 520px) {
+
+    .player {
+
+        width: 115px;
+
+        padding: 8px;
+
+        font-size: 12px;
+
+    }
+
+
+    .p1 {
+
+        top: 48px;
+
+    }
+
+
+    .p4 {
+
+        bottom: 160px;
+
+    }
+
+
+    .arena {
+
+        width: 92vw;
+
+        height: 35vh;
+
+    }
+
+
+    .hand {
+
+        padding: 0 8px;
+
+    }
+
+
+    .card {
+
+        width: 42px;
+
+        height: 60px;
+
+        padding: 4px;
+
+    }
+
+
+    .card .rank {
+
+        font-size: 17px;
+
+    }
+
+
+    .card .suit {
+
+        font-size: 15px;
+
+    }
+
+
+    .actions button {
+
+        padding: 9px 12px;
+
+    }
+
+
+    .logo {
+
+        font-size: 32px;
+
+    }
+
+}

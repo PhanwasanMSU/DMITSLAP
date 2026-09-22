@@ -1,0 +1,13 @@
+{
+  "name": "dmit-slap-war-server",
+  "version": "1.0.0",
+  "description": "D.M.I.T Slap War Multiplayer Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  }
+}
