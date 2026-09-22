@@ -3,4 +3,4 @@
 // Server Configuration
 // ========================================
 
-const SERVER_URL = "https://dmitslap-war.onrender.com";
+const SERVER_URL = "https://phanwasanrsu.github.io/DMITSLAP/";
