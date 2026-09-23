@@ -1,525 +1,395 @@
-// ========================================
+// ============================================================
 // D.M.I.T SLAP WAR
-// CLIENT
-// ========================================
+// CLIENT APP
+// Online 1v1v1v1 + Solo BOT
+// ============================================================
 
 const socket = io(SERVER_URL, {
-    transports: [
-        "websocket",
-        "polling"
-    ]
+    transports: ["websocket", "polling"]
 });
 
-
-// ========================================
+// ============================================================
 // STATE
-// ========================================
+// ============================================================
 
 let myId = null;
-
 let myName = "";
-
 let currentRoom = "";
-
 let currentGame = null;
-
 let selectedCards = [];
 
 let timerInterval = null;
+let soloTurnTimer = null;
 
+let isSoloMode = false;
+let soloState = null;
 
-// ========================================
+const TURN_TIME_LIMIT = 20;
+
+// ============================================================
 // DOM
-// ========================================
+// ============================================================
 
-const lobby =
-    document.getElementById("lobby");
+const lobby = document.getElementById("lobby");
+const roomScreen = document.getElementById("roomScreen");
+const gameScreen = document.getElementById("gameScreen");
 
-const roomScreen =
-    document.getElementById("roomScreen");
+const playerName = document.getElementById("playerName");
+const roomCode = document.getElementById("roomCode");
 
-const gameScreen =
-    document.getElementById("gameScreen");
+const connectionStatus = document.getElementById("connectionStatus");
 
-const playerName =
-    document.getElementById("playerName");
+const currentRoomCode = document.getElementById("currentRoomCode");
+const gameRoomCode = document.getElementById("gameRoomCode");
 
-const roomCode =
-    document.getElementById("roomCode");
+const playerList = document.getElementById("playerList");
 
-const connectionStatus =
-    document.getElementById(
-        "connectionStatus"
-    );
+const hand = document.getElementById("hand");
+const pile = document.getElementById("pile");
+const pileInfo = document.getElementById("pileInfo");
 
-const currentRoomCode =
-    document.getElementById(
-        "currentRoomCode"
-    );
+const gameMessage = document.getElementById("gameMessage");
+const toast = document.getElementById("toast");
+const turnTimer = document.getElementById("turnTimer");
 
-const gameRoomCode =
-    document.getElementById(
-        "gameRoomCode"
-    );
-
-const playerList =
-    document.getElementById(
-        "playerList"
-    );
-
-const hand =
-    document.getElementById(
-        "hand"
-    );
-
-const pile =
-    document.getElementById(
-        "pile"
-    );
-
-const pileInfo =
-    document.getElementById(
-        "pileInfo"
-    );
-
-const gameMessage =
-    document.getElementById(
-        "gameMessage"
-    );
-
-const toast =
-    document.getElementById(
-        "toast"
-    );
-
-const turnTimer =
-    document.getElementById(
-        "turnTimer"
-    );
+const roomMessage = document.getElementById("roomMessage");
 
 
-// ========================================
-// BUTTONS
-// ========================================
+// ============================================================
+// BUTTON EVENTS
+// ============================================================
 
-document
-    .getElementById("createRoomBtn")
-    .addEventListener(
-        "click",
-        createRoom
-    );
+document.getElementById("createRoomBtn")
+    ?.addEventListener("click", createRoom);
 
-document
-    .getElementById("joinRoomBtn")
-    .addEventListener(
-        "click",
-        joinRoom
-    );
+document.getElementById("copyRoomBtn")
+    ?.addEventListener("click", copyRoomCode);
 
-document
-    .getElementById("copyRoomBtn")
-    .addEventListener(
-        "click",
-        copyRoomCode
-    );
+document.getElementById("readyBtn")
+    ?.addEventListener("click", toggleReady);
 
-document
-    .getElementById("readyBtn")
-    .addEventListener(
-        "click",
-        toggleReady
-    );
+document.getElementById("startGameBtn")
+    ?.addEventListener("click", startGame);
 
-document
-    .getElementById("startGameBtn")
-    .addEventListener(
-        "click",
-        startGame
-    );
+document.getElementById("leaveRoomBtn")
+    ?.addEventListener("click", leaveRoom);
 
-document
-    .getElementById("leaveRoomBtn")
-    .addEventListener(
-        "click",
-        leaveRoom
-    );
+document.getElementById("playBtn")
+    ?.addEventListener("click", playSelected);
 
-document
-    .getElementById("playBtn")
-    .addEventListener(
-        "click",
-        playSelected
-    );
+document.getElementById("passBtn")
+    ?.addEventListener("click", passTurn);
 
-document
-    .getElementById("passBtn")
-    .addEventListener(
-        "click",
-        passTurn
-    );
+document.getElementById("slapBtn")
+    ?.addEventListener("click", slap);
 
-document
-    .getElementById("slapBtn")
-    .addEventListener(
-        "click",
-        slap
-    );
-
-document
-    .getElementById("backRoomBtn")
-    .addEventListener(
-        "click",
-        backToRoom
-    );
+document.getElementById("backRoomBtn")
+    ?.addEventListener("click", backToRoom);
 
 
-// ========================================
+// ============================================================
 // EMOTES
-// ========================================
+// ============================================================
 
-document
-    .querySelectorAll(
-        ".emotes button"
-    )
-    .forEach(button => {
+document.querySelectorAll(".emotes button").forEach(button => {
 
-        button.addEventListener(
-            "click",
-            () => {
+    button.addEventListener("click", () => {
 
-                const emoji =
-                    button.dataset.emoji;
+        const emoji = button.dataset.emoji;
 
-                socket.emit(
-                    "game:emote",
-                    emoji
-                );
-            }
-        );
+        if (!emoji) return;
+
+        if (isSoloMode) {
+            showFloatingEmote(emoji);
+        } else {
+            socket.emit("game:emote", {
+                emoji: emoji
+            });
+        }
 
     });
 
-
-// ========================================
-// SOCKET CONNECT
-// ========================================
-
-socket.on(
-    "connect",
-    () => {
-
-        myId = socket.id;
-
-        connectionStatus.textContent =
-            "เชื่อมต่อ Server แล้ว ✓";
-
-        connectionStatus.style.color =
-            "#31d17c";
-
-        showToast(
-            "เชื่อมต่อ Server สำเร็จ"
-        );
-    }
-);
+});
 
 
-// ========================================
-// DISCONNECT
-// ========================================
+// ============================================================
+// SOCKET CONNECTION
+// ============================================================
 
-socket.on(
-    "disconnect",
-    () => {
+socket.on("connect", () => {
 
-        connectionStatus.textContent =
-            "หลุดจาก Server";
+    myId = socket.id;
 
-        connectionStatus.style.color =
-            "#ff4168";
-
-        showToast(
-            "การเชื่อมต่อหลุด"
-        );
-    }
-);
-
-
-// ========================================
-// SERVER ONLINE
-// ========================================
-
-socket.on(
-    "server:online",
-    data => {
-
-        console.log(
-            data.message
-        );
-    }
-);
-
-
-// ========================================
-// CREATE ROOM
-// ========================================
-
-function createRoom() {
-
-    const name =
-        getPlayerName();
-
-    if (!name) {
-        return;
+    if (connectionStatus) {
+        connectionStatus.textContent = "● เชื่อมต่อ Server แล้ว ✓";
+        connectionStatus.style.color = "#31d17c";
     }
 
-    myName = name;
+    showToast("เชื่อมต่อ Server สำเร็จ");
 
-    socket.emit(
-        "room:create",
-        {
-            name
-        }
-    );
+});
+
+
+socket.on("disconnect", () => {
+
+    if (isSoloMode) return;
+
+    if (connectionStatus) {
+        connectionStatus.textContent = "● หลุดจาก Server";
+        connectionStatus.style.color = "#ff4168";
+    }
+
+    showToast("การเชื่อมต่อ Server หลุด");
+
+});
+
+
+// ============================================================
+// PLAYER
+// ============================================================
+
+function getPlayerAvatar() {
+
+    if (
+        typeof selectedCharacter !== "undefined" &&
+        selectedCharacter &&
+        selectedCharacter.emoji
+    ) {
+        return selectedCharacter.emoji;
+    }
+
+    return "😎";
 }
 
-
-// ========================================
-// JOIN ROOM
-// ========================================
-
-function joinRoom() {
-
-    const name =
-        getPlayerName();
-
-    const code =
-        roomCode.value
-            .trim()
-            .toUpperCase();
-
-    if (!name) {
-        return;
-    }
-
-    if (code.length !== 5) {
-
-        showToast(
-            "ใส่รหัสห้อง 5 ตัว"
-        );
-
-        return;
-    }
-
-    myName = name;
-
-    socket.emit(
-        "room:join",
-        {
-            name,
-            code
-        }
-    );
-}
-
-
-// ========================================
-// GET NAME
-// ========================================
 
 function getPlayerName() {
 
-    const name =
-        playerName.value
-            .trim();
+    if (!playerName) return "Player";
+
+    const name = playerName.value.trim();
 
     if (!name) {
 
-        showToast(
-            "กรุณาใส่ชื่อผู้เล่น"
-        );
+        showToast("กรุณาใส่ชื่อผู้เล่น");
 
         playerName.focus();
 
         return null;
     }
 
-    return name.slice(
-        0,
-        16
-    );
+    return name.slice(0, 16);
 }
 
 
-// ========================================
+// ============================================================
+// CREATE ROOM
+// ============================================================
+
+function createRoom() {
+
+    isSoloMode = false;
+
+    const name = getPlayerName();
+
+    if (!name) return;
+
+    myName = name;
+
+    socket.emit("room:create", {
+
+        name: name,
+
+        avatar: getPlayerAvatar()
+
+    });
+
+}
+
+
+// ============================================================
+// JOIN ROOM
+// ============================================================
+
+function joinRoom() {
+
+    isSoloMode = false;
+
+    const name = getPlayerName();
+
+    if (!name) return;
+
+    const code = roomCode.value
+        .trim()
+        .toUpperCase();
+
+    if (code.length !== 5) {
+
+        showToast("รหัสห้องต้องมี 5 ตัว");
+
+        return;
+    }
+
+    myName = name;
+
+    socket.emit("room:join", {
+
+        name: name,
+
+        code: code,
+
+        avatar: getPlayerAvatar()
+
+    });
+
+}
+
+
+// ============================================================
 // ROOM CREATED
-// ========================================
+// ============================================================
 
-socket.on(
-    "room:created",
-    data => {
+socket.on("room:created", data => {
 
-        currentRoom =
-            data.code;
+    if (isSoloMode) return;
 
-        roomCode.value =
-            data.code;
+    currentRoom = data.code;
 
-        showRoom();
-    }
-);
+    roomCode.value = data.code;
+
+    showRoom();
+
+    showToast(`สร้างห้อง ${data.code} แล้ว`);
+
+});
 
 
-// ========================================
+// ============================================================
 // ROOM JOINED
-// ========================================
+// ============================================================
 
-socket.on(
-    "room:joined",
-    data => {
+socket.on("room:joined", data => {
 
-        currentRoom =
-            data.code;
+    if (isSoloMode) return;
 
-        roomCode.value =
-            data.code;
+    currentRoom = data.code;
 
-        showRoom();
-    }
-);
+    roomCode.value = data.code;
+
+    showRoom();
+
+    showToast(`เข้าห้อง ${data.code} แล้ว`);
+
+});
 
 
-// ========================================
+// ============================================================
 // ROOM ERROR
-// ========================================
+// ============================================================
 
-socket.on(
-    "room:error",
-    message => {
+socket.on("room:error", message => {
 
-        showToast(
-            message
-        );
+    if (!isSoloMode) {
+        showToast(message);
     }
-);
+
+});
 
 
-// ========================================
+// ============================================================
 // ROOM UPDATE
-// ========================================
+// ============================================================
 
-socket.on(
-    "room:update",
-    room => {
+socket.on("room:update", room => {
 
-        currentRoom =
-            room.code;
+    if (isSoloMode) return;
 
-        renderRoom(
-            room
-        );
+    currentRoom = room.code;
 
-        if (
-            room.started &&
-            gameScreen.classList.contains(
-                "active"
-            )
-        ) {
-            return;
-        }
+    renderRoom(room);
 
-    }
-);
+});
 
 
-// ========================================
+// ============================================================
 // SHOW ROOM
-// ========================================
+// ============================================================
 
 function showRoom() {
 
-    lobby.classList.remove(
-        "active"
-    );
+    lobby.classList.remove("active");
+    gameScreen.classList.remove("active");
 
-    gameScreen.classList.remove(
-        "active"
-    );
+    roomScreen.classList.add("active");
 
-    roomScreen.classList.add(
-        "active"
-    );
+    currentRoomCode.textContent = currentRoom;
 
-    currentRoomCode.textContent =
-        currentRoom;
+    if (gameRoomCode) {
+        gameRoomCode.textContent = currentRoom;
+    }
 
-    roomMessage.textContent =
-        "รอผู้เล่น 4 คน...";
+    if (roomMessage) {
+        roomMessage.textContent = "รอผู้เล่น 4 คน...";
+    }
+
 }
 
 
-// ========================================
+// ============================================================
 // RENDER ROOM
-// ========================================
+// ============================================================
 
 function renderRoom(room) {
 
-    currentRoomCode.textContent =
-        room.code;
+    currentRoomCode.textContent = room.code;
 
     playerList.innerHTML = "";
 
-    room.players.forEach(
-        (player, index) => {
+    room.players.forEach((player, index) => {
 
-            const div =
-                document.createElement(
-                    "div"
-                );
+        const div = document.createElement("div");
 
-            div.className =
-                "room-player";
-
-            div.innerHTML = `
-                <div class="room-avatar">
-                    P${index + 1}
-                </div>
-
-                <div class="room-player-info">
-                    <span class="room-player-name">
-                        ${escapeHTML(player.name)}
-                    </span>
-
-                    <span class="ready-status ${player.ready ? "ready" : ""}">
-                        ${player.ready ? "✓ READY" : "รอ READY"}
-                    </span>
-                </div>
-            `;
-
-            playerList.appendChild(
-                div
-            );
-        }
-    );
-
-    while (
-        playerList.children.length <
-        4
-    ) {
-
-        const div =
-            document.createElement(
-                "div"
-            );
-
-        div.className =
-            "room-player";
+        div.className = "room-player";
 
         div.innerHTML = `
+
+            <div class="room-avatar">
+                ${player.avatar || "P" + (index + 1)}
+            </div>
+
+            <div class="room-player-info">
+
+                <span class="room-player-name">
+                    ${escapeHTML(player.name)}
+                </span>
+
+                <span class="ready-status ${player.ready ? "ready" : ""}">
+                    ${player.ready ? "✓ READY" : "รอ READY"}
+                </span>
+
+            </div>
+        `;
+
+        playerList.appendChild(div);
+
+    });
+
+
+    // Empty slots
+
+    while (playerList.children.length < 4) {
+
+        const div = document.createElement("div");
+
+        div.className = "room-player";
+
+        div.innerHTML = `
+
             <div class="room-avatar">
                 ?
             </div>
 
             <div class="room-player-info">
+
                 <span class="room-player-name">
                     รอผู้เล่น...
                 </span>
@@ -527,346 +397,994 @@ function renderRoom(room) {
                 <span class="ready-status">
                     Empty
                 </span>
+
             </div>
         `;
 
-        playerList.appendChild(
-            div
-        );
+        playerList.appendChild(div);
+
     }
+
 
     const allReady =
         room.players.length === 4 &&
-        room.players.every(
-            player => player.ready
-        );
+        room.players.every(player => player.ready);
 
-    document
-        .getElementById("startGameBtn")
-        .disabled =
-            !allReady;
 
-    if (
-        room.players.length < 4
-    ) {
+    const startButton =
+        document.getElementById("startGameBtn");
 
-        roomMessage.textContent =
-            `มีผู้เล่น ${room.players.length}/4`;
+    if (startButton) {
 
-    } else if (!allReady) {
+        startButton.disabled = !allReady;
 
-        roomMessage.textContent =
-            "ผู้เล่นทุกคนกด READY ก่อน";
+        startButton.style.opacity =
+            allReady ? "1" : ".5";
 
-    } else {
-
-        roomMessage.textContent =
-            "พร้อมแล้ว! กด START GAME";
     }
+
+
+    if (roomMessage) {
+
+        if (room.players.length < 4) {
+
+            roomMessage.textContent =
+                `รอผู้เล่น... ${room.players.length}/4`;
+
+        } else if (!allReady) {
+
+            roomMessage.textContent =
+                "ผู้เล่นครบแล้ว กรุณา READY";
+
+        } else {
+
+            roomMessage.textContent =
+                "พร้อมเริ่มเกม!";
+
+        }
+
+    }
+
 }
 
 
-// ========================================
+// ============================================================
 // READY
-// ========================================
+// ============================================================
 
 function toggleReady() {
 
-    socket.emit(
-        "room:ready"
-    );
+    if (isSoloMode) return;
+
+    socket.emit("room:ready");
+
 }
 
 
-// ========================================
-// START
-// ========================================
+// ============================================================
+// START GAME
+// ============================================================
 
 function startGame() {
 
-    socket.emit(
-        "game:start"
-    );
+    if (isSoloMode) return;
+
+    socket.emit("game:start");
+
 }
 
 
-// ========================================
-// GAME STARTED
-// ========================================
+// ============================================================
+// GAME START
+// ============================================================
 
-socket.on(
-    "game:started",
-    data => {
+socket.on("game:started", data => {
 
-        showGame();
+    if (isSoloMode) return;
 
-        showToast(
-            data.message
-        );
+    showGame();
+
+    if (data?.message) {
+        showToast(data.message);
     }
-);
+
+});
 
 
-// ========================================
+// ============================================================
 // SHOW GAME
-// ========================================
+// ============================================================
 
 function showGame() {
 
-    lobby.classList.remove(
-        "active"
-    );
+    lobby.classList.remove("active");
+    roomScreen.classList.remove("active");
 
-    roomScreen.classList.remove(
-        "active"
-    );
+    gameScreen.classList.add("active");
 
-    gameScreen.classList.add(
-        "active"
-    );
+    if (gameRoomCode) {
+        gameRoomCode.textContent =
+            currentRoom || "-----";
+    }
 
-    gameRoomCode.textContent =
-        currentRoom;
 }
 
 
-// ========================================
-// GAME STATE
-// ========================================
+// ============================================================
+// ONLINE GAME STATE
+// ============================================================
 
-socket.on(
-    "game:state",
-    state => {
+socket.on("game:state", state => {
 
-        currentGame =
-            state;
+    if (isSoloMode) return;
 
-        selectedCards = [];
+    currentGame = state;
 
-        showGame();
+    selectedCards = [];
 
-        renderPlayers(
-            state
-        );
+    showGame();
 
-        renderHand(
-            state.hand
-        );
+    renderPlayers(state);
 
-        renderPile(
-            state.pile
-        );
+    renderHand(state.hand || []);
 
-        updateButtons(
-            state
-        );
+    renderPile(state.pile || []);
 
-        updateMyInfo(
-            state
-        );
-    }
-);
+    updateButtons(state);
+
+    updateMyInfo(state);
+
+});
 
 
-// ========================================
-// RENDER PLAYERS
-// ========================================
+// ============================================================
+// SOLO GAME
+// ============================================================
 
-function renderPlayers(
-    state
-) {
+function startSingleplayer(name, avatar) {
 
-    const players =
-        state.players;
+    isSoloMode = true;
 
-    const positions = [
-        "playerTop",
-        "playerLeft",
-        "playerRight"
+    myName = name;
+
+    currentRoom = "BOT01";
+
+    const suits = ["S", "C", "D", "H"];
+
+    const suitSymbols = {
+
+        S: "♠",
+        C: "♣",
+        D: "♦",
+        H: "♥"
+
+    };
+
+
+    const ranks = [
+
+        { val: 3, label: "3" },
+        { val: 4, label: "4" },
+        { val: 5, label: "5" },
+        { val: 6, label: "6" },
+        { val: 7, label: "7" },
+        { val: 8, label: "8" },
+        { val: 9, label: "9" },
+        { val: 10, label: "10" },
+        { val: 11, label: "J" },
+        { val: 12, label: "Q" },
+        { val: 13, label: "K" },
+        { val: 14, label: "A" },
+        { val: 15, label: "2" }
+
     ];
 
-    // My player
+
+    let deck = [];
+
+    let cardIdCounter = 1;
+
+
+    suits.forEach(suit => {
+
+        ranks.forEach(rank => {
+
+            deck.push({
+
+                id: "c_" + cardIdCounter++,
+
+                val: rank.val,
+
+                label: rank.label,
+
+                suit: suit,
+
+                suitSymbol: suitSymbols[suit]
+
+            });
+
+        });
+
+    });
+
+
+    deck.sort(() => Math.random() - 0.5);
+
+
+    const players = [
+
+        {
+            id: "p_me",
+            name: name,
+            avatar: avatar,
+            hand: deck.slice(0, 13),
+            isBot: false
+        },
+
+        {
+            id: "p_bot1",
+            name: "Akarinn",
+            avatar: "🤡",
+            hand: deck.slice(13, 26),
+            isBot: true
+        },
+
+        {
+            id: "p_bot2",
+            name: "Gotcha Boy",
+            avatar: "🤖",
+            hand: deck.slice(26, 39),
+            isBot: true
+        },
+
+        {
+            id: "p_bot3",
+            name: "Milli",
+            avatar: "🤓",
+            hand: deck.slice(39, 52),
+            isBot: true
+        }
+
+    ];
+
+
+    players.forEach(player => {
+
+        player.hand.sort((a, b) =>
+            a.val - b.val
+        );
+
+    });
+
+
+    soloState = {
+
+        players: players,
+
+        turnIndex: 0,
+
+        pile: [],
+
+        lastPlayerId: null,
+
+        slapAvailable: true
+
+    };
+
+
+    showGame();
+
+    updateSoloUI();
+
+    runSoloTurn();
+
+    showToast("เริ่มเกม D.M.I.T Slap War!");
+
+}
+
+
+// ============================================================
+// SOLO UI
+// ============================================================
+
+function updateSoloUI() {
+
+    if (!isSoloMode || !soloState) return;
+
+
+    const currentPlayer =
+        soloState.players[soloState.turnIndex];
+
+
+    currentGame = {
+
+        turnPlayerId: currentPlayer.id,
+
+        pile: soloState.pile,
+
+        slapAvailable: soloState.slapAvailable,
+
+        players: soloState.players.map(player => ({
+
+            id: player.id,
+
+            name: player.name,
+
+            avatar: player.avatar,
+
+            cardCount: player.hand.length
+
+        }))
+
+    };
+
+
+    const me =
+        soloState.players.find(
+            player => player.id === "p_me"
+        );
+
+
+    renderPlayers(currentGame);
+
+    renderHand(me ? me.hand : []);
+
+    renderPile(soloState.pile);
+
+    updateButtons(currentGame);
+
+    updateMyInfo(currentGame);
+
+}
+
+
+// ============================================================
+// SOLO TURN TIMER
+// ============================================================
+
+function runSoloTurn() {
+
+    if (!isSoloMode || !soloState) return;
+
+
+    updateSoloUI();
+
+
+    const currentPlayer =
+        soloState.players[soloState.turnIndex];
+
+
+    clearInterval(soloTurnTimer);
+
+
+    let seconds = TURN_TIME_LIMIT;
+
+    turnTimer.textContent = seconds;
+
+
+    soloTurnTimer = setInterval(() => {
+
+        seconds--;
+
+        turnTimer.textContent =
+            Math.max(seconds, 0);
+
+
+        if (seconds <= 0) {
+
+            clearInterval(soloTurnTimer);
+
+
+            if (!currentPlayer.isBot) {
+
+                showToast(
+                    "หมดเวลา! PASS อัตโนมัติ"
+                );
+
+                passTurnSolo();
+
+            }
+
+        }
+
+    }, 1000);
+
+
+    if (currentPlayer.isBot) {
+
+        showGameMessage(
+            `รอ ${currentPlayer.name} กำลังคิด...`
+        );
+
+
+        setTimeout(() => {
+
+            if (!isSoloMode || !soloState) return;
+
+            executeBotAction(currentPlayer);
+
+        }, 1200);
+
+    }
+
+}
+
+
+// ============================================================
+// BOT
+// ============================================================
+
+function executeBotAction(bot) {
+
+    if (!soloState) return;
+
+    if (
+        soloState.players[soloState.turnIndex].id
+        !== bot.id
+    ) {
+        return;
+    }
+
+
+    let validCards = [];
+
+
+    if (soloState.pile.length === 0) {
+
+        if (bot.hand.length > 0) {
+
+            validCards = [bot.hand[0]];
+
+        }
+
+    } else {
+
+        const topCard =
+            soloState.pile[
+                soloState.pile.length - 1
+            ];
+
+
+        const higherCards =
+            bot.hand.filter(
+                card => card.val > topCard.val
+            );
+
+
+        if (
+            higherCards.length > 0 &&
+            Math.random() > 0.3
+        ) {
+
+            validCards = [higherCards[0]];
+
+        }
+
+    }
+
+
+    if (validCards.length > 0) {
+
+        bot.hand =
+            bot.hand.filter(
+                card => !validCards.includes(card)
+            );
+
+
+        soloState.pile = validCards;
+
+        soloState.lastPlayerId = bot.id;
+
+
+        showGameMessage(
+            `${bot.name} ลงไพ่ ${validCards[0].label}${validCards[0].suitSymbol}`
+        );
+
+
+        if (bot.hand.length === 0) {
+
+            triggerSoloWin(bot);
+
+            return;
+
+        }
+
+    } else {
+
+        showGameMessage(
+            `${bot.name} PASS!`
+        );
+
+    }
+
+
+    nextSoloTurn();
+
+}
+
+
+// ============================================================
+// NEXT SOLO TURN
+// ============================================================
+
+function nextSoloTurn() {
+
+    clearInterval(soloTurnTimer);
+
+    soloState.turnIndex =
+        (soloState.turnIndex + 1)
+        % soloState.players.length;
+
+
+    runSoloTurn();
+
+}
+
+
+// ============================================================
+// PLAYER PLAY SOLO
+// ============================================================
+
+function playSelectedSolo() {
+
+    if (!soloState) return;
+
+
+    const me =
+        soloState.players.find(
+            player => player.id === "p_me"
+        );
+
+
+    if (
+        soloState.players[soloState.turnIndex].id
+        !== me.id
+    ) {
+
+        showToast("ยังไม่ถึงตาของคุณ");
+
+        return;
+
+    }
+
+
+    if (selectedCards.length === 0) {
+
+        showToast("เลือกไพ่ก่อน");
+
+        return;
+
+    }
+
+
+    const chosenCards =
+        me.hand.filter(
+            card => selectedCards.includes(card.id)
+        );
+
+
+    if (chosenCards.length === 0) return;
+
+
+    // ตรวจสอบไพ่ใบแรก
+    if (soloState.pile.length > 0) {
+
+        const topCard =
+            soloState.pile[
+                soloState.pile.length - 1
+            ];
+
+
+        if (chosenCards[0].val <= topCard.val) {
+
+            showToast(
+                "ต้องใช้ไพ่ที่สูงกว่าตบ!"
+            );
+
+            return;
+
+        }
+
+    }
+
+
+    me.hand =
+        me.hand.filter(
+            card => !selectedCards.includes(card.id)
+        );
+
+
+    soloState.pile = chosenCards;
+
+    soloState.lastPlayerId = me.id;
+
+    selectedCards = [];
+
+
+    showGameMessage(
+        "คุณลงไพ่สำเร็จ!"
+    );
+
+
+    if (me.hand.length === 0) {
+
+        triggerSoloWin(me);
+
+        return;
+
+    }
+
+
+    nextSoloTurn();
+
+}
+
+
+// ============================================================
+// PASS SOLO
+// ============================================================
+
+function passTurnSolo() {
+
+    if (!soloState) return;
+
+
+    const me =
+        soloState.players.find(
+            player => player.id === "p_me"
+        );
+
+
+    if (
+        soloState.players[soloState.turnIndex].id
+        !== me.id
+    ) {
+        return;
+    }
+
+
+    if (soloState.pile.length === 0) {
+
+        showToast(
+            "คุณต้องเป็นคนเปิดกอง ห้าม PASS"
+        );
+
+        return;
+
+    }
+
+
+    selectedCards = [];
+
+    showGameMessage(
+        "คุณ PASS ตานี้"
+    );
+
+
+    nextSoloTurn();
+
+}
+
+
+// ============================================================
+// SLAP
+// ============================================================
+
+function slapSolo() {
+
+    if (!soloState) return;
+
+
+    showToast(
+        "SLAP! ล้างโต๊ะ!"
+    );
+
+
+    soloState.pile = [];
+
+    soloState.slapAvailable = true;
+
+
+    gameScreen.classList.add(
+        "slap-effect"
+    );
+
+
+    setTimeout(() => {
+
+        gameScreen.classList.remove(
+            "slap-effect"
+        );
+
+    }, 600);
+
+
+    updateSoloUI();
+
+}
+
+
+// ============================================================
+// SOLO WIN
+// ============================================================
+
+function triggerSoloWin(winner) {
+
+    clearInterval(soloTurnTimer);
+
+    document.getElementById(
+        "winnerText"
+    ).textContent =
+        `${winner.name} ชนะเลิศ! 🎉`;
+
+
+    document.getElementById(
+        "resultModal"
+    ).classList.add("show");
+
+}
+
+
+// ============================================================
+// RENDER PLAYERS
+// ============================================================
+
+function renderPlayers(state) {
+
+    const players = state.players || [];
+
+
+    const positions = [
+
+        "playerTop",
+        "playerRight",
+        "playerLeft"
+
+    ];
+
+
     const me =
         players.find(
             player =>
-                player.id === myId
+                player.id === myId ||
+                player.id === "p_me"
         );
 
-    document
-        .getElementById(
-            "myName"
-        )
-        .textContent =
-            me
-                ? me.name
-                : myName;
+
+    const myElement =
+        document.getElementById("myPlayerInfo");
+
+
+    if (me) {
+
+        const myNameElement =
+            document.getElementById("myName");
+
+        const myAvatarElement =
+            document.getElementById("myAvatar");
+
+        if (myNameElement) {
+            myNameElement.textContent =
+                me.name;
+        }
+
+        if (
+            myAvatarElement &&
+            me.avatar
+        ) {
+            myAvatarElement.textContent =
+                me.avatar;
+        }
+
+    }
+
 
     const others =
         players.filter(
             player =>
-                player.id !== myId
+                player.id !==
+                (me ? me.id : myId)
         );
 
-    positions.forEach(
-        (id, index) => {
 
-            const element =
-                document.getElementById(
-                    id
-                );
+    positions.forEach((elementId, index) => {
 
-            const player =
-                others[index];
+        const element =
+            document.getElementById(elementId);
 
-            if (!player) {
 
-                element.style.opacity =
-                    ".3";
+        if (!element) return;
 
-                element.querySelector(
-                    ".player-name"
-                ).textContent =
+
+        const player = others[index];
+
+
+        // ไม่มีผู้เล่น
+        if (!player) {
+
+            element.style.opacity = ".3";
+
+            const name =
+                element.querySelector(".anime-name");
+
+            const count =
+                element.querySelector(".card-count");
+
+            if (name) {
+                name.textContent =
                     "Waiting...";
-
-                element.querySelector(
-                    ".card-count"
-                ).textContent =
-                    "0 ใบ";
-
-                element.classList.remove(
-                    "active-turn"
-                );
-
-                return;
             }
 
-            element.style.opacity =
-                "1";
+            if (count) {
+                count.textContent =
+                    "0 ใบ";
+            }
 
-            element.querySelector(
-                ".player-name"
-            ).textContent =
+            element.classList.remove(
+                "active-turn"
+            );
+
+            return;
+
+        }
+
+
+        element.style.opacity = "1";
+
+
+        const avatar =
+            element.querySelector(".avatar");
+
+        const name =
+            element.querySelector(".anime-name");
+
+        const count =
+            element.querySelector(".card-count");
+
+
+        if (avatar) {
+
+            avatar.textContent =
+                player.avatar ||
+                "P" + (index + 1);
+
+        }
+
+
+        if (name) {
+
+            name.textContent =
                 player.name;
 
-            element.querySelector(
-                ".card-count"
-            ).textContent =
+        }
+
+
+        if (count) {
+
+            count.textContent =
                 `${player.cardCount} ใบ`;
 
-            element.classList.toggle(
-                "active-turn",
-                player.id ===
-                state.turnPlayerId
-            );
         }
-    );
-}
 
 
-// ========================================
-// UPDATE MY INFO
-// ========================================
-
-function updateMyInfo(
-    state
-) {
-
-    const me =
-        state.players.find(
-            player =>
-                player.id === myId
+        element.classList.toggle(
+            "active-turn",
+            player.id === state.turnPlayerId
         );
 
-    if (!me) {
-        return;
-    }
+    });
 
-    document
-        .getElementById(
-            "myName"
-        )
-        .textContent =
-            me.name;
-
-    document
-        .getElementById(
-            "myCardCount"
-        )
-        .textContent =
-            `${me.cardCount} ใบ`;
 }
 
 
-// ========================================
-// RENDER HAND
-// ========================================
+// ============================================================
+// MY INFO
+// ============================================================
 
-function renderHand(
-    cards
-) {
+function updateMyInfo(state) {
+
+    const me =
+        state.players?.find(
+            player =>
+                player.id === myId ||
+                player.id === "p_me"
+        );
+
+
+    if (!me) return;
+
+
+    const name =
+        document.getElementById("myName");
+
+    const count =
+        document.getElementById("myCardCount");
+
+    const avatar =
+        document.getElementById("myAvatar");
+
+
+    if (name) {
+        name.textContent =
+            me.name;
+    }
+
+
+    if (count) {
+        count.textContent =
+            `${me.cardCount} ใบ`;
+    }
+
+
+    if (avatar && me.avatar) {
+        avatar.textContent =
+            me.avatar;
+    }
+
+}
+
+
+// ============================================================
+// HAND
+// ============================================================
+
+function renderHand(cards) {
 
     hand.innerHTML = "";
 
-    if (!cards) {
-        return;
-    }
+    if (!cards) return;
 
-    cards.forEach(
-        card => {
 
-            const element =
-                createCard(
-                    card,
-                    true
-                );
+    cards.forEach(card => {
 
-            element.addEventListener(
-                "click",
-                () => {
+        const element =
+            createCard(card, true);
 
-                    toggleCard(
-                        card.id,
-                        element
-                    );
-                }
-            );
 
-            hand.appendChild(
-                element
-            );
-        }
-    );
+        element.addEventListener(
+            "click",
+            () =>
+                toggleCard(
+                    card.id,
+                    element
+                )
+        );
+
+
+        hand.appendChild(element);
+
+    });
+
 }
 
 
-// ========================================
+// ============================================================
 // CREATE CARD
-// ========================================
+// ============================================================
 
-function createCard(
-    card,
-    interactive = false
-) {
+function createCard(card, interactive = false) {
 
     const element =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
+
 
     const red =
         card.suit === "D" ||
         card.suit === "H";
 
+
     element.className =
         `card ${red ? "red" : "black"}`;
 
-    if (interactive) {
 
+    if (interactive) {
         element.dataset.id =
             card.id;
     }
 
+
     element.innerHTML = `
+
         <div class="card-rank">
             ${card.label}
         </div>
@@ -874,25 +1392,24 @@ function createCard(
         <div class="card-suit">
             ${card.suitSymbol}
         </div>
+
     `;
 
+
     return element;
+
 }
 
 
-// ========================================
+// ============================================================
 // SELECT CARD
-// ========================================
+// ============================================================
 
-function toggleCard(
-    cardId,
-    element
-) {
+function toggleCard(cardId, element) {
 
     const index =
-        selectedCards.indexOf(
-            cardId
-        );
+        selectedCards.indexOf(cardId);
+
 
     if (index >= 0) {
 
@@ -905,46 +1422,56 @@ function toggleCard(
             "selected"
         );
 
-    } else {
+        return;
 
-        if (
-            selectedCards.length >= 4
-        ) {
-
-            showToast(
-                "เลือกได้สูงสุด 4 ใบ"
-            );
-
-            return;
-        }
-
-        selectedCards.push(
-            cardId
-        );
-
-        element.classList.add(
-            "selected"
-        );
     }
+
+
+    if (selectedCards.length >= 4) {
+
+        showToast(
+            "เลือกได้สูงสุด 4 ใบ"
+        );
+
+        return;
+
+    }
+
+
+    selectedCards.push(cardId);
+
+    element.classList.add(
+        "selected"
+    );
+
 }
 
 
-// ========================================
+// ============================================================
 // PLAY
-// ========================================
+// ============================================================
 
 function playSelected() {
 
-    if (
-        selectedCards.length === 0
-    ) {
+    if (isSoloMode) {
+
+        playSelectedSolo();
+
+        return;
+
+    }
+
+
+    if (selectedCards.length === 0) {
 
         showToast(
             "เลือกไพ่ก่อน"
         );
 
         return;
+
     }
+
 
     if (
         !currentGame ||
@@ -956,355 +1483,409 @@ function playSelected() {
         );
 
         return;
+
     }
+
 
     socket.emit(
         "game:play",
         {
-            cards:
-                selectedCards
+            cards: selectedCards
         }
     );
+
 }
 
 
-// ========================================
-// PLAY EVENT
-// ========================================
+// ============================================================
+// SERVER PLAY EVENT
+// ============================================================
 
-socket.on(
-    "game:play",
-    data => {
+socket.on("game:play", data => {
 
-        showGameMessage(
-            `${data.playerName} ลงไพ่`
-        );
-    }
-);
+    if (!data) return;
+
+    showGameMessage(
+        `${data.playerName || "Player"} ลงไพ่`
+    );
+
+});
 
 
-// ========================================
+// ============================================================
 // PASS
-// ========================================
+// ============================================================
 
 function passTurn() {
+
+    if (isSoloMode) {
+
+        passTurnSolo();
+
+        return;
+
+    }
+
+
+    if (
+        !currentGame ||
+        currentGame.turnPlayerId !== myId
+    ) {
+
+        showToast(
+            "ยังไม่ถึงตาของคุณ"
+        );
+
+        return;
+
+    }
+
 
     socket.emit(
         "game:pass"
     );
+
 }
 
 
-// ========================================
-// PASS EVENT
-// ========================================
+socket.on("game:pass", data => {
 
-socket.on(
-    "game:pass",
-    data => {
+    showGameMessage(
+        `${data.playerName} PASS`
+    );
 
-        showGameMessage(
-            `${data.playerName} PASS`
-        );
-    }
-);
+});
 
 
-// ========================================
+// ============================================================
 // SLAP
-// ========================================
+// ============================================================
 
 function slap() {
+
+    if (isSoloMode) {
+
+        slapSolo();
+
+        return;
+
+    }
+
 
     socket.emit(
         "game:slap"
     );
+
 }
 
 
-// ========================================
-// SLAP EVENT
-// ========================================
+socket.on("game:slap", data => {
 
-socket.on(
-    "game:slap",
-    data => {
+    showGameMessage(
+        `${data.slapperName} SLAP!`
+    );
 
-        showGameMessage(
-            `${data.slapperName} SLAP! ${data.punishedName} โดนเอาไพ่คืน`
-        );
 
-        gameScreen.classList.add(
+    gameScreen.classList.add(
+        "slap-effect"
+    );
+
+
+    setTimeout(() => {
+
+        gameScreen.classList.remove(
             "slap-effect"
         );
 
-        setTimeout(
-            () => {
-
-                gameScreen.classList.remove(
-                    "slap-effect"
-                );
-
-            },
-            600
-        );
-
-        showToast(
-            `${data.slapperName} ตบสำเร็จ!`
-        );
-    }
-);
+    }, 600);
 
 
-// ========================================
-// RENDER PILE
-// ========================================
+    showToast(
+        `${data.slapperName} ตบสำเร็จ!`
+    );
 
-function renderPile(
-    cards
-) {
+});
+
+
+// ============================================================
+// PILE
+// ============================================================
+
+function renderPile(cards) {
 
     pile.innerHTML = "";
 
-    if (
-        !cards ||
-        cards.length === 0
-    ) {
+
+    if (!cards || cards.length === 0) {
 
         pileInfo.textContent =
-            "เริ่มกองใหม่";
+            "กองกลาง";
 
         return;
+
     }
 
-    cards.forEach(
-        card => {
 
-            pile.appendChild(
-                createCard(
-                    card,
-                    false
-                )
-            );
-        }
-    );
+    cards.forEach(card => {
+
+        pile.appendChild(
+            createCard(card, false)
+        );
+
+    });
+
 
     pileInfo.textContent =
         `${cards.length} ใบ`;
+
 }
 
 
-// ========================================
-// UPDATE BUTTONS
-// ========================================
+// ============================================================
+// BUTTON STATE
+// ============================================================
 
-function updateButtons(
-    state
-) {
+function updateButtons(state) {
+
+    if (!state) return;
+
 
     const myTurn =
-        state.turnPlayerId === myId;
+        state.turnPlayerId === myId ||
+        state.turnPlayerId === "p_me";
 
-    document
-        .getElementById(
-            "playBtn"
-        )
-        .disabled =
+
+    const playBtn =
+        document.getElementById("playBtn");
+
+    const passBtn =
+        document.getElementById("passBtn");
+
+    const slapBtn =
+        document.getElementById("slapBtn");
+
+
+    if (playBtn) {
+
+        playBtn.disabled =
             !myTurn;
 
-    document
-        .getElementById(
-            "passBtn"
-        )
-        .disabled =
+        playBtn.style.opacity =
+            myTurn ? "1" : ".45";
+
+    }
+
+
+    if (passBtn) {
+
+        passBtn.disabled =
             !myTurn ||
+            !state.pile ||
             state.pile.length === 0;
 
-    document
-        .getElementById(
-            "slapBtn"
-        )
-        .disabled =
+        passBtn.style.opacity =
+            passBtn.disabled ? ".45" : "1";
+
+    }
+
+
+    if (slapBtn) {
+
+        slapBtn.disabled =
             !state.slapAvailable;
+
+        slapBtn.style.opacity =
+            slapBtn.disabled ? ".45" : "1";
+
+    }
+
 
     if (myTurn) {
 
         showGameMessage(
-            "ถึงตาคุณ!"
+            "ถึงตาคุณแล้ว!"
         );
 
     } else {
 
         const player =
-            state.players.find(
+            state.players?.find(
                 p =>
                     p.id ===
                     state.turnPlayerId
             );
+
 
         if (player) {
 
             showGameMessage(
                 `รอ ${player.name} เล่น`
             );
+
         }
+
     }
+
 }
 
 
-// ========================================
-// TIMER
-// ========================================
+// ============================================================
+// TIMER FROM SERVER
+// ============================================================
 
-socket.on(
-    "game:timer",
-    data => {
+socket.on("game:timer", data => {
 
-        clearInterval(
-            timerInterval
-        );
-
-        let seconds =
-            data.seconds;
-
-        turnTimer.textContent =
-            seconds;
-
-        timerInterval =
-            setInterval(
-                () => {
-
-                    seconds--;
-
-                    if (
-                        seconds < 0
-                    ) {
-
-                        clearInterval(
-                            timerInterval
-                        );
-
-                        return;
-                    }
-
-                    turnTimer.textContent =
-                        seconds;
-
-                },
-                1000
-            );
-    }
-);
+    if (isSoloMode) return;
 
 
-// ========================================
-// EMOTE EVENT
-// ========================================
-
-socket.on(
-    "game:emote",
-    data => {
-
-        showFloatingEmote(
-            data.emoji
-        );
-    }
-);
+    clearInterval(timerInterval);
 
 
-// ========================================
+    let seconds =
+        Number(data.seconds) || 0;
+
+
+    turnTimer.textContent =
+        seconds;
+
+
+    timerInterval =
+        setInterval(() => {
+
+            seconds--;
+
+            turnTimer.textContent =
+                Math.max(seconds, 0);
+
+
+            if (seconds <= 0) {
+
+                clearInterval(
+                    timerInterval
+                );
+
+            }
+
+        }, 1000);
+
+});
+
+
+// ============================================================
+// EMOTE FROM SERVER
+// ============================================================
+
+socket.on("game:emote", data => {
+
+    if (!data) return;
+
+    showFloatingEmote(
+        data.emoji
+    );
+
+});
+
+
+// ============================================================
 // GAME MESSAGE
-// ========================================
+// ============================================================
 
-socket.on(
-    "game:message",
-    message => {
+socket.on("game:message", message => {
 
-        showGameMessage(
-            message
-        );
+    showGameMessage(message);
 
-        showToast(
-            message
-        );
-    }
-);
+    showToast(message);
+
+});
 
 
-// ========================================
-// ERROR
-// ========================================
+socket.on("game:error", message => {
 
-socket.on(
-    "game:error",
-    message => {
+    showToast(message);
 
-        showToast(
-            message
-        );
-    }
-);
+});
 
 
-// ========================================
-// RESULT
-// ========================================
+// ============================================================
+// GAME RESULT
+// ============================================================
 
-socket.on(
-    "game:result",
-    data => {
+socket.on("game:result", data => {
 
-        document
-            .getElementById(
-                "winnerText"
-            )
-            .textContent =
-                `${data.winnerName} ชนะ!`;
-
-        document
-            .getElementById(
-                "resultModal"
-            )
-            .classList.add(
-                "show"
-            );
-    }
-);
+    if (isSoloMode) return;
 
 
-// ========================================
-// BACK ROOM
-// ========================================
+    document.getElementById(
+        "winnerText"
+    ).textContent =
+        `${data.winnerName} ชนะ!`;
+
+
+    document.getElementById(
+        "resultModal"
+    ).classList.add("show");
+
+});
+
+
+// ============================================================
+// BACK TO ROOM
+// ============================================================
 
 function backToRoom() {
 
-    document
-        .getElementById(
-            "resultModal"
-        )
-        .classList.remove(
-            "show"
-        );
+    document.getElementById(
+        "resultModal"
+    ).classList.remove("show");
 
-    showRoom();
+
+    if (isSoloMode) {
+
+        leaveRoom();
+
+    } else {
+
+        showRoom();
+
+    }
+
 }
 
 
-// ========================================
-// LEAVE
-// ========================================
+// ============================================================
+// LEAVE ROOM
+// ============================================================
 
 function leaveRoom() {
 
-    socket.emit(
-        "room:leave"
+    if (!isSoloMode) {
+
+        socket.emit(
+            "room:leave"
+        );
+
+    }
+
+
+    isSoloMode = false;
+
+    clearInterval(
+        soloTurnTimer
     );
+
+    clearInterval(
+        timerInterval
+    );
+
 
     currentRoom = "";
 
     currentGame = null;
 
+    soloState = null;
+
     selectedCards = [];
+
 
     gameScreen.classList.remove(
         "active"
@@ -1317,27 +1898,22 @@ function leaveRoom() {
     lobby.classList.add(
         "active"
     );
+
 }
 
 
-// ========================================
-// ROOM LEFT
-// ========================================
+socket.on("room:left", () => {
 
-socket.on(
-    "room:left",
-    () => {
+    showToast(
+        "ออกจากห้องแล้ว"
+    );
 
-        showToast(
-            "ออกจากห้องแล้ว"
-        );
-    }
-);
+});
 
 
-// ========================================
+// ============================================================
 // COPY ROOM
-// ========================================
+// ============================================================
 
 async function copyRoomCode() {
 
@@ -1345,9 +1921,9 @@ async function copyRoomCode() {
         currentRoom ||
         roomCode.value;
 
-    if (!code) {
-        return;
-    }
+
+    if (!code) return;
+
 
     try {
 
@@ -1364,135 +1940,197 @@ async function copyRoomCode() {
         showToast(
             `รหัสห้อง: ${code}`
         );
+
     }
+
 }
 
 
-// ========================================
+// ============================================================
 // GAME MESSAGE
-// ========================================
+// ============================================================
 
-function showGameMessage(
-    message
-) {
+function showGameMessage(message) {
 
-    gameMessage.textContent =
-        message;
+    if (gameMessage) {
+
+        gameMessage.textContent =
+            message;
+
+    }
+
 }
 
 
-// ========================================
+// ============================================================
 // TOAST
-// ========================================
+// ============================================================
 
 let toastTimer = null;
 
-function showToast(
-    message
-) {
+
+function showToast(message) {
+
+    if (!toast) return;
+
 
     toast.textContent =
         message;
+
 
     toast.classList.add(
         "show"
     );
 
+
     clearTimeout(
         toastTimer
     );
 
+
     toastTimer =
-        setTimeout(
-            () => {
+        setTimeout(() => {
 
-                toast.classList.remove(
-                    "show"
-                );
+            toast.classList.remove(
+                "show"
+            );
 
-            },
-            2200
-        );
+        }, 2200);
+
 }
 
 
-// ========================================
+// ============================================================
 // FLOATING EMOTE
-// ========================================
+// ============================================================
 
-function showFloatingEmote(
-    emoji
-) {
+function showFloatingEmote(emoji) {
+
+    if (!emoji) return;
+
 
     const element =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
+
 
     element.className =
         "floating-emote";
 
+
     element.textContent =
         emoji;
+
 
     element.style.left =
         `${35 + Math.random() * 30}%`;
 
+
     element.style.top =
         `${35 + Math.random() * 25}%`;
+
 
     document.body.appendChild(
         element
     );
 
-    setTimeout(
-        () => {
 
-            element.remove();
+    setTimeout(() => {
 
-        },
-        1300
-    );
+        element.remove();
+
+    }, 1300);
+
 }
 
 
-// ========================================
+// ============================================================
 // ESCAPE HTML
-// ========================================
+// ============================================================
 
-function escapeHTML(
-    text
-) {
+function escapeHTML(text) {
 
     return String(text)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
         );
+
 }
 
 
-// ========================================
-// ENTER KEY
-// ========================================
+// ============================================================
+// SORT CARDS
+// ============================================================
 
-playerName.addEventListener(
+function sortHandCards() {
+
+    if (!isSoloMode || !soloState) {
+
+        showToast(
+            "ระบบเรียงไพ่จะเพิ่มในเกมออนไลน์"
+        );
+
+        return;
+
+    }
+
+
+    const me =
+        soloState.players.find(
+            player =>
+                player.id === "p_me"
+        );
+
+
+    if (!me) return;
+
+
+    me.hand.sort(
+        (a, b) =>
+            a.val - b.val
+    );
+
+
+    selectedCards = [];
+
+    renderHand(
+        me.hand
+    );
+
+
+    showToast(
+        "เรียงไพ่ในมือแล้ว"
+    );
+
+}
+
+
+// ============================================================
+// PLAYER NAME
+// ============================================================
+
+playerName?.addEventListener(
     "keydown",
     event => {
 
@@ -1501,11 +2139,18 @@ playerName.addEventListener(
         ) {
 
             createRoom();
+
         }
+
     }
 );
 
-roomCode.addEventListener(
+
+// ============================================================
+// ROOM CODE
+// ============================================================
+
+roomCode?.addEventListener(
     "keydown",
     event => {
 
@@ -1514,6 +2159,26 @@ roomCode.addEventListener(
         ) {
 
             joinRoom();
+
         }
+
     }
 );
+
+
+// ============================================================
+// EXPORT FOR HTML
+// ============================================================
+
+// ทำให้ HTML ที่ใช้ onclick เรียกได้
+window.startSingleplayer =
+    startSingleplayer;
+
+window.createRoom =
+    createRoom;
+
+window.joinRoom =
+    joinRoom;
+
+window.sortHandCards =
+    sortHandCards;

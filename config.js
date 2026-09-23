@@ -1,6 +1,5 @@
 // ========================================
-// D.M.I.T SLAP WAR
-// Server Configuration
+// D.M.I.T SLAP WAR - SERVER CONFIG
 // ========================================
 
-const SERVER_URL = "https://phanwasanrsu.github.io/DMITSLAP/";
+const SERVER_URL = "https://dmitslap-war.onrender.com";

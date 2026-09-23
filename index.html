@@ -1,503 +1,399 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>D.M.I.T SLAP WAR</title>
+    <link rel="stylesheet" href="style.css">
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        body {
+            font-family: Arial, "Noto Sans Thai", sans-serif;
+            background: radial-gradient(circle at center, #111827 0%, #070a12 65%);
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        button, input { font-family: inherit; }
+        button { border: 0; cursor: pointer; }
+
+        .screen { display: none; min-height: 100vh; width: 100%; }
+        .screen.active { display: flex; }
+
+        /* TITLE SCREEN */
+        .title-screen {
+            position: fixed; inset: 0; z-index: 99999; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 9vh;
+            background: radial-gradient(circle at 50% 35%, rgba(80, 110, 255, .18), transparent 42%), linear-gradient(180deg, #111326 0%, #171b36 52%, #090b15 100%);
+            overflow: hidden; transition: opacity 0.3s ease;
+        }
+        .title-screen::before {
+            content: "D.M.I.T"; position: absolute; top: 12%; left: 50%; transform: translateX(-50%);
+            font-size: clamp(55px, 11vw, 150px); font-weight: 1000; letter-spacing: 10px; color: rgba(255,255,255,.045); white-space: nowrap; pointer-events: none;
+        }
+        .title-screen .title-logo { position: absolute; top: 17%; left: 50%; transform: translateX(-50%) rotate(-2deg); text-align: center; line-height: .85; user-select: none; pointer-events: none; }
+        .title-screen .title-logo-main { font-size: clamp(55px, 9vw, 125px); font-weight: 1000; letter-spacing: -5px; color: #fff; text-shadow: 0 7px 0 #2b3153, 0 13px 25px rgba(0,0,0,.55); }
+        .title-screen .title-logo-main span { color: #aaff18; }
+        .title-screen .title-logo-sub { margin-top: 10px; font-size: clamp(28px, 5vw, 70px); font-weight: 1000; font-style: italic; letter-spacing: 5px; color: #ff3f78; text-shadow: 0 5px 0 #661c3b; }
+        .enter-game-btn {
+            position: relative; min-width: 300px; padding: 17px 42px; border: 0; border-radius: 18px;
+            background: linear-gradient(90deg, #d8ff16, #47ef62); color: #10120e; font-size: clamp(22px, 3vw, 34px); font-weight: 1000; cursor: pointer;
+            z-index: 100000; box-shadow: 0 8px 0 #75a300, 0 18px 35px rgba(0,0,0,.4); transition: .15s ease;
+        }
+        .enter-game-btn:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 11px 0 #75a300, 0 22px 40px rgba(0,0,0,.45); }
+        .title-version { position: absolute; top: 18px; left: 22px; color: rgba(255,255,255,.55); font-size: 12px; pointer-events: none; }
+
+        /* LOBBY SCREEN */
+        #lobby {
+            position: relative; min-height: 100vh; overflow: hidden;
+            background: radial-gradient(circle at 50% 45%, rgba(49, 103, 159, .45), transparent 35%), linear-gradient(135deg, #0d1021 0%, #151b39 48%, #0c0e1b 100%);
+        }
+        .lobby-logo { position: absolute; top: 25px; left: 50%; transform: translateX(-50%); z-index: 4; text-align: center; font-weight: 1000; line-height: .9; pointer-events: none; }
+        .lobby-logo .main { font-size: clamp(28px, 4vw, 48px); color: #fff; text-shadow: 0 4px 0 #282d49; }
+        .lobby-logo .main span { color: #aaff18; }
+        .lobby-logo .sub { margin-top: 7px; color: #ff477e; font-size: clamp(18px, 2vw, 28px); font-style: italic; letter-spacing: 3px; }
+
+        .profile-card {
+            position: absolute; top: 28px; left: 28px; z-index: 50; min-width: 245px; display: flex; align-items: center; gap: 12px;
+            padding: 10px 18px 10px 10px; border: 2px solid rgba(255,255,255,.12); border-radius: 18px; background: rgba(10, 12, 24, .9);
+            box-shadow: 0 14px 35px rgba(0,0,0,.35); backdrop-filter: blur(10px); pointer-events: auto; cursor: pointer;
+        }
+        .profile-avatar { width: 50px; height: 50px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(145deg, #2c3157, #15182a); border: 3px solid #aaff18; font-size: 28px; }
+        .profile-level { margin-top: 3px; color: #aab3cb; font-size: 11px; }
+        .connection-lobby { position: absolute; top: 110px; left: 32px; z-index: 5; color: #82f58f; font-size: 11px; pointer-events: none; }
+
+        .character-stage { position: absolute; z-index: 2; inset: 110px 250px 120px 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+        .character-glow { position: absolute; width: min(46vw, 500px); height: min(46vw, 500px); border-radius: 50%; background: radial-gradient(circle, rgba(170,255,24,.17), transparent 65%); filter: blur(5px); }
+        .character-platform { position: absolute; bottom: 2%; width: min(44vw, 500px); height: 80px; border-radius: 50%; background: radial-gradient(ellipse, rgba(69, 235, 255, .34), rgba(32,40,85,.1) 70%); border: 1px solid rgba(105, 225, 255, .25); box-shadow: 0 0 45px rgba(71, 211, 255, .15); }
+        .character-display { position: relative; z-index: 2; width: min(29vw, 360px); height: min(48vh, 490px); display: flex; align-items: center; justify-content: center; font-size: clamp(150px, 20vw, 300px); filter: drop-shadow(0 25px 20px rgba(0,0,0,.38)); user-select: none; animation: characterIdle 3s ease-in-out infinite; }
+        .character-label { position: relative; z-index: 3; margin-top: 8px; padding: 8px 20px; border-radius: 999px; background: rgba(8,10,18,.7); border: 1px solid rgba(255,255,255,.1); color: #fff; font-size: 13px; font-weight: 800; letter-spacing: 1px; }
+        @keyframes characterIdle { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-12px) rotate(1deg); } }
+
+        .character-select-btn {
+            position: absolute; left: 28px; bottom: 30px; z-index: 50; min-width: 210px; padding: 15px 20px;
+            border: 2px solid rgba(255,255,255,.15); border-radius: 16px; background: linear-gradient(135deg, #292f52, #171b31);
+            color: #fff; cursor: pointer; text-align: left; box-shadow: 0 12px 30px rgba(0,0,0,.35); pointer-events: auto;
+        }
+        .character-select-btn strong { display: block; font-size: 18px; }
+        .character-select-btn span { display: block; margin-top: 3px; color: #aeb7cd; font-size: 11px; }
+
+        .lobby-actions {
+            position: absolute; right: 28px; bottom: 30px; z-index: 50; width: 230px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto;
+        }
+        .lobby-solo-btn, .lobby-play-btn, .lobby-create-btn {
+            min-height: 48px; border: 0; border-radius: 14px; font-size: 16px; font-weight: 1000; cursor: pointer; transition: .15s ease; width: 100%;
+        }
+        .lobby-solo-btn { background: linear-gradient(90deg, #3478ff, #754cff); color: #fff; box-shadow: 0 4px 0 #3b2a88; }
+        .lobby-play-btn { background: linear-gradient(90deg, #d8ff16, #4cf061); color: #11140f; box-shadow: 0 4px 0 #79a600; }
+        .lobby-create-btn { background: linear-gradient(90deg, #ffca2e, #ff6a3d); color: #16100a; box-shadow: 0 4px 0 #a84124; }
+        .lobby-solo-btn:hover, .lobby-play-btn:hover, .lobby-create-btn:hover, .character-select-btn:hover { transform: translateY(-3px); }
+
+        .hidden-by-new-lobby { display: none !important; }
+
+        /* MODALS */
+        .character-modal, .room-choice, .modal {
+            position: fixed; inset: 0; z-index: 100000; display: none; place-items: center; background: rgba(4,6,14,.78); backdrop-filter: blur(8px);
+        }
+        .character-modal.open, .room-choice.open, .modal.show { display: grid; }
+        .character-modal-box, .room-choice-box {
+            background: #15192b; border: 2px solid rgba(255,255,255,.12); border-radius: 25px; padding: 25px; box-shadow: 0 30px 90px rgba(0,0,0,.55);
+        }
+        .character-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .character-option { border: 2px solid #343c58; border-radius: 18px; background: #1d2236; color: white; padding: 15px 10px; cursor: pointer; text-align: center; }
+        .character-option.selected { border-color: #aaff18; }
+        .character-option .char { font-size: 55px; display: block; }
+        .choice-btn { width: 100%; padding: 13px; margin-top: 8px; border-radius: 12px; font-weight: 900; background: #2b3350; color: white; cursor: pointer; border: 0; }
+        .choice-btn.primary-choice { background: linear-gradient(90deg, #d8ff16, #4cf061); color: #11140f; }
+        .choice-cancel { margin-top: 12px; background: transparent; color: #9fa9c0; cursor: pointer; border: 0; width: 100%; }
+
+        /* ROOM SCREEN STYLES */
+        #roomScreen { flex-direction: column; align-items: center; padding: 30px; }
+        .top-title { width: min(1000px, 100%); display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; font-size: 28px; font-weight: 900; }
+        .room-panel { width: min(800px, 100%); background: rgba(17, 24, 39, .95); border: 1px solid #334155; border-radius: 25px; padding: 30px; }
+        .room-code-box { text-align: center; padding: 20px; background: #0a101c; border-radius: 18px; margin-bottom: 25px; }
+        .player-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 15px; }
+        .room-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 25px; }
+
+        /* GAME SCREEN STYLES */
+        .game-screen { background: radial-gradient(circle at center, #1b1b3a 0%, #080b14 85%); flex-direction: column; justify-content: space-between; height: 100vh; overflow: hidden; }
+        .game-header-anime { display: flex; justify-content: center; padding-top: 15px; }
+        .round-indicator { background: rgba(15, 23, 42, 0.8); border: 2px solid #a855f7; padding: 4px 24px; border-radius: 99px; font-size: 16px; font-weight: bold; color: #fff; box-shadow: 0 0 15px rgba(168, 85, 247, 0.5); }
+        .round-indicator span { color: #facc15; font-size: 20px; margin-left: 6px; }
+        .game-table-anime { position: relative; flex: 1; display: flex; justify-content: center; align-items: center; }
+        .anime-arena { position: absolute; width: 260px; height: 230px; background: linear-gradient(145deg, rgba(30, 27, 75, 0.7), rgba(10, 15, 30, 0.9)); clip-path: polygon(50% 0%, 100% 100%, 0% 100%); border: 3px solid #facc15; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 50px rgba(250, 204, 21, 0.35), inset 0 0 25px rgba(168, 85, 247, 0.4); }
+        .anime-player { position: absolute; display: flex; align-items: center; background: rgba(15, 23, 42, 0.9); border: 2px solid #a855f7; border-radius: 16px; padding: 8px 14px; gap: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.5); z-index: 5; }
+        .player-top-pos { top: 12%; left: 38%; }
+        .player-right-pos { top: 35%; right: 10%; }
+        .player-left-pos { bottom: 25%; left: 10%; }
+        .timer-circle-container { position: absolute; top: 22%; left: 15%; width: 65px; height: 65px; border-radius: 50%; background: rgba(15, 23, 42, 0.85); border: 4px solid #06b6d4; display: grid; place-items: center; box-shadow: 0 0 20px rgba(6, 182, 212, 0.6); z-index: 10; }
+        .timer-number { font-size: 24px; font-weight: 1000; color: #67e8f9; }
+        .anime-bottom-panel { position: relative; background: rgba(8, 12, 22, 0.95); border-top: 2px solid rgba(168, 85, 247, 0.3); padding: 15px 25px; display: flex; flex-direction: column; align-items: center; }
+        .anime-pass-btn { position: absolute; right: 25px; top: -45px; background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; font-weight: 1000; font-size: 16px; padding: 8px 24px; border-radius: 12px; border: 2px solid #fca5a5; cursor: pointer; z-index: 20; }
+        .anime-hand { display: flex; justify-content: center; align-items: flex-end; min-height: 100px; overflow-x: auto; width: 100%; }
+        .anime-action-bar { display: flex; gap: 12px; margin-top: 12px; }
+        .sort-hand-btn { position: absolute; right: 25px; bottom: 25px; background: #10b981; color: #fff; padding: 8px 16px; border-radius: 10px; font-weight: bold; font-size: 13px; border: 0; cursor: pointer; }
+        
+        /* CARD STYLES */
+        .card { width: 65px; height: 90px; background: linear-gradient(145deg, #ffffff, #dce4ef); color: #111827; border-radius: 9px; border: 2px solid #ffffff; box-shadow: 0 8px 15px rgba(0,0,0,.3); position: relative; user-select: none; transition: transform .15s; }
+        .anime-hand .card { cursor: pointer; }
+        .anime-hand .card:hover { transform: translateY(-12px); }
+        .card.selected { transform: translateY(-25px); border-color: #ffc83d; box-shadow: 0 0 18px rgba(255, 200, 61, .6); }
+        .card.red { color: #dc2626; }
+        .card.black { color: #111827; }
+        .card-rank { position: absolute; top: 6px; left: 8px; font-size: 18px; font-weight: 900; }
+        .card-suit { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 30px; }
+        
+        /* TOAST & EMOTES */
+        #toast { position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%) translateY(100px); background: #111827; border: 1px solid #334155; padding: 13px 20px; border-radius: 14px; z-index: 2000; opacity: 0; transition: .25s; pointer-events: none; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .floating-emote { position: fixed; z-index: 999; font-size: 50px; animation: floatEmote 1.2s ease-out forwards; pointer-events: none; }
+        @keyframes floatEmote { 0% { transform: translateY(0) scale(.5); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-100px) scale(1.2); opacity: 0; } }
+        .slap-effect { animation: slapShake .5s; }
+        @keyframes slapShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-10px) rotate(-2deg); } 40% { transform: translateX(10px) rotate(2deg); } 60% { transform: translateX(-8px) rotate(-1deg); } 80% { transform: translateX(8px) rotate(1deg); } }
+    </style>
 </head>
-
 <body>
 
-    <!-- ================================= -->
-    <!-- LOBBY -->
-    <!-- ================================= -->
-
-    <section
-        id="lobby"
-        class="screen active"
-    >
-
-        <div class="logo">
-
-            <div class="logo-main">
-                D.M.I.T
-            </div>
-
-            <div class="logo-sub">
-                SLAP WAR
-            </div>
-
+    <!-- TITLE SCREEN -->
+    <section id="titleScreen" class="title-screen">
+        <div class="title-version">D.M.I.T SLAP WAR • Prototype</div>
+        <div class="title-logo">
+            <div class="title-logo-main">D.M.I.T <span>SLAP</span></div>
+            <div class="title-logo-sub">WAR!</div>
         </div>
-
-        <div class="panel">
-
-            <input
-                id="playerName"
-                type="text"
-                maxlength="16"
-                placeholder="ชื่อผู้เล่น"
-            >
-
-            <div class="two-buttons">
-
-                <button
-                    id="createRoomBtn"
-                    class="primary"
-                >
-                    สร้างห้อง
-                </button>
-
-                <button
-                    id="joinRoomBtn"
-                >
-                    เข้าห้อง
-                </button>
-
-            </div>
-
-            <div class="room-row">
-
-                <input
-                    id="roomCode"
-                    type="text"
-                    maxlength="5"
-                    placeholder="รหัสห้อง"
-                >
-
-                <button id="copyRoomBtn">
-                    COPY
-                </button>
-
-            </div>
-
-            <div
-                id="connectionStatus"
-                class="connection"
-            >
-                กำลังเชื่อมต่อ...
-            </div>
-
-        </div>
-
+        <button id="enterGameBtn" class="enter-game-btn" onclick="
+            const ts = document.getElementById('titleScreen');
+            if(ts) {
+                ts.style.opacity = '0';
+                ts.style.pointerEvents = 'none';
+                setTimeout(() => ts.style.display = 'none', 300);
+            }
+        ">🎴 เข้าเกม</button>
     </section>
 
+    <!-- LOBBY SCREEN -->
+    <section id="lobby" class="screen active">
+        <div class="lobby-logo">
+            <div class="main">D.M.I.T <span>SLAP WAR</span></div>
+            <div class="sub">CARD PARTY BATTLE</div>
+        </div>
 
-    <!-- ================================= -->
-    <!-- ROOM -->
-    <!-- ================================= -->
+        <div class="profile-card" onclick="document.getElementById('characterModal').classList.add('open')">
+            <div id="profileAvatar" class="profile-avatar">😎</div>
+            <div style="flex:1;">
+                <input id="playerName" type="text" maxlength="16" value="Player" onclick="event.stopPropagation()" style="background:transparent; border:none; border-bottom:2px solid #aaff18; color:white; font-size:18px; font-weight:900; width:100%; outline:none; padding:2px 0; cursor:text;" />
+                <div class="profile-level">LV.1 • NEW PLAYER</div>
+            </div>
+        </div>
 
-    <section
-        id="roomScreen"
-        class="screen"
-    >
+        <div id="connectionStatus" class="connection connection-lobby">● กำลังเชื่อมต่อ...</div>
+        
+        <div class="character-stage">
+            <div class="character-glow"></div>
+            <div class="character-platform"></div>
+            <div id="characterDisplay" class="character-display">😎</div>
+            <div id="characterLabel" class="character-label">COOL GUY</div>
+        </div>
 
+        <button id="characterSelectBtn" class="character-select-btn" onclick="document.getElementById('characterModal').classList.add('open')">
+            <strong>👕 ตัวละคร</strong>
+            <span>เลือกตัวละครของคุณ</span>
+        </button>
+
+        <div class="lobby-actions">
+            <button id="soloPlayBtn" class="lobby-solo-btn">🤖 เล่นคนเดียว</button>
+            <button id="joinRoomBtn" class="lobby-play-btn">▶ เล่นออนไลน์</button>
+            <button id="createRoomBtn" class="lobby-create-btn">＋ สร้างห้อง</button>
+        </div>
+
+        <input id="roomCode" class="hidden-by-new-lobby" type="text" maxlength="5" placeholder="รหัสห้อง">
+        <button id="copyRoomBtn" class="hidden-by-new-lobby" type="button">COPY</button>
+    </section>
+
+    <!-- CHARACTER MODAL -->
+    <div id="characterModal" class="character-modal">
+        <div class="character-modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2>👕 เลือกตัวละคร</h2>
+                <button id="closeCharacterBtn" onclick="document.getElementById('characterModal').classList.remove('open')" style="background:#292f46; color:white; border:none; width:35px; height:35px; border-radius:10px; cursor:pointer;">✕</button>
+            </div>
+            <div class="character-grid">
+                <button class="character-option selected" data-character="😎" data-name="COOL GUY" onclick="selectChar('😎', 'COOL GUY')"><span class="char">😎</span><strong>COOL GUY</strong></button>
+                <button class="character-option" data-character="🤡" data-name="THE CLOWN" onclick="selectChar('🤡', 'THE CLOWN')"><span class="char">🤡</span><strong>THE CLOWN</strong></button>
+                <button class="character-option" data-character="😈" data-name="LITTLE DEVIL" onclick="selectChar('😈', 'LITTLE DEVIL')"><span class="char">😈</span><strong>LITTLE DEVIL</strong></button>
+                <button class="character-option" data-character="🤓" data-name="THE NERD" onclick="selectChar('🤓', 'THE NERD')"><span class="char">🤓</span><strong>THE NERD</strong></button>
+                <button class="character-option" data-character="🥷" data-name="NINJA" onclick="selectChar('🥷', 'NINJA')"><span class="char">🥷</span><strong>NINJA</strong></button>
+                <button class="character-option" data-character="👽" data-name="ALIEN" onclick="selectChar('👽', 'ALIEN')"><span class="char">👽</span><strong>ALIEN</strong></button>
+                <button class="character-option" data-character="🤖" data-name="ROBOT" onclick="selectChar('🤖', 'ROBOT')"><span class="char">🤖</span><strong>ROBOT</strong></button>
+                <button class="character-option" data-character="🐱" data-name="CAT" onclick="selectChar('🐱', 'CAT')"><span class="char">🐱</span><strong>CAT</strong></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROOM CHOICE MODAL -->
+    <div id="roomChoiceModal" class="room-choice">
+        <div class="room-choice-box" style="width:400px; text-align:center;">
+            <h2>🎮 เล่น D.M.I.T Slap War</h2>
+            <p style="color:#9fa9c0; margin-bottom:15px;">เลือกโหมดห้องออนไลน์</p>
+            <button id="quickMatchBtn" class="choice-btn primary-choice">🎲 Quick Match ออนไลน์</button>
+            <input id="joinCodeInput" type="text" maxlength="5" placeholder="ใส่รหัสห้อง เช่น A1234" style="width:100%; padding:12px; margin:10px 0; border-radius:10px; border:1px solid #39435e; background:#0e1120; color:white;">
+            <button id="joinCodeBtn" class="choice-btn">🔑 เข้าห้องด้วย Code</button>
+            <button id="closeRoomChoiceBtn" class="choice-cancel" onclick="document.getElementById('roomChoiceModal').classList.remove('open')">← กลับ Lobby</button>
+        </div>
+    </div>
+
+    <!-- ROOM WAITING SCREEN -->
+    <section id="roomScreen" class="screen">
         <div class="top-title">
-
-            <div>
-                D.M.I.T
-                <span>SLAP WAR</span>
-            </div>
-
-            <button
-                id="leaveRoomBtn"
-                class="danger"
-            >
-                ออกจากห้อง
-            </button>
-
+            <div>D.M.I.T <span style="color:#ff4168;">SLAP WAR</span></div>
+            <button id="leaveRoomBtn" style="background:#ff4168; color:white; padding:10px 20px; border-radius:10px; cursor:pointer; border:0;">ออกจากห้อง</button>
         </div>
-
         <div class="room-panel">
-
             <div class="room-code-box">
-
-                <div>
-                    รหัสห้อง
-                </div>
-
-                <strong id="currentRoomCode">
-                    -----
-                </strong>
-
+                <div>รหัสห้อง</div>
+                <strong id="currentRoomCode" style="font-size:38px; letter-spacing:10px; color:#ff4168;">-----</strong>
             </div>
-
-            <h2>
-                ผู้เล่น
-            </h2>
-
-            <div
-                id="playerList"
-                class="player-list"
-            >
-            </div>
-
+            <h2>ผู้เล่น</h2>
+            <div id="playerList" class="player-list"></div>
             <div class="room-actions">
-
-                <button
-                    id="readyBtn"
-                    class="primary"
-                >
-                    READY
-                </button>
-
-                <button
-                    id="startGameBtn"
-                    class="start"
-                >
-                    START GAME
-                </button>
-
+                <button id="readyBtn" style="padding:12px; border-radius:10px; background:#3478ff; color:white; font-weight:bold; cursor:pointer;">READY</button>
+                <button id="startGameBtn" style="padding:12px; border-radius:10px; background:#31d17c; color:white; font-weight:bold; cursor:pointer;">START GAME</button>
             </div>
-
-            <div
-                id="roomMessage"
-                class="room-message"
-            >
-                รอผู้เล่น...
-            </div>
-
+            <div id="roomMessage" style="text-align:center; margin-top:15px; color:#94a3b8;">รอผู้เล่น...</div>
         </div>
-
     </section>
 
-
-    <!-- ================================= -->
-    <!-- GAME -->
-    <!-- ================================= -->
-
-    <section
-        id="gameScreen"
-        class="screen game-screen"
-    >
-
-        <!-- TOP BAR -->
-
-        <header class="game-header">
-
-            <div class="game-logo">
-                D.M.I.T
-                <span>SLAP WAR</span>
-            </div>
-
-            <div class="game-info">
-
-                <div>
-                    ห้อง:
-                    <strong id="gameRoomCode">
-                        -----
-                    </strong>
-                </div>
-
-                <div>
-                    เวลา:
-                    <strong id="turnTimer">
-                        30
-                    </strong>
-                </div>
-
-            </div>
-
+    <!-- GAMEPLAY SCREEN -->
+    <section id="gameScreen" class="screen game-screen">
+        <header class="game-header-anime">
+            <div class="round-indicator">ห้อง: <strong id="gameRoomCode" style="color:#facc15;">-----</strong></div>
         </header>
-
-
-        <!-- GAME TABLE -->
-
-        <main class="game-table">
-
-            <!-- PLAYER 1 -->
-
-            <div
-                id="playerTop"
-                class="player player-top"
-            >
-
-                <div class="avatar">
-                    P1
-                </div>
-
-                <div class="player-info">
-
-                    <strong class="player-name">
-                        Player
-                    </strong>
-
-                    <span class="card-count">
-                        13 ใบ
-                    </span>
-
-                </div>
-
-                <div class="turn-dot">
-                </div>
-
+        <main class="game-table-anime">
+            <div id="playerTop" class="anime-player player-top-pos">
+                <div class="avatar" style="width:38px; height:38px; border-radius:50%; background:#8b5cf6; display:grid; place-items:center;">P1</div>
+                <div class="anime-info-box"><strong class="anime-name">Player</strong><span class="anime-badge card-count">13 ใบ</span></div>
             </div>
-
-
-            <!-- PLAYER 2 -->
-
-            <div
-                id="playerLeft"
-                class="player player-left"
-            >
-
-                <div class="avatar">
-                    P2
-                </div>
-
-                <div class="player-info">
-
-                    <strong class="player-name">
-                        Player
-                    </strong>
-
-                    <span class="card-count">
-                        13 ใบ
-                    </span>
-
-                </div>
-
-                <div class="turn-dot">
-                </div>
-
+            <div id="playerRight" class="anime-player player-right-pos">
+                <div class="avatar" style="width:38px; height:38px; border-radius:50%; background:#8b5cf6; display:grid; place-items:center;">P3</div>
+                <div class="anime-info-box"><strong class="anime-name">Player</strong><span class="anime-badge card-count">13 ใบ</span></div>
             </div>
-
-
-            <!-- PLAYER 3 -->
-
-            <div
-                id="playerRight"
-                class="player player-right"
-            >
-
-                <div class="avatar">
-                    P3
-                </div>
-
-                <div class="player-info">
-
-                    <strong class="player-name">
-                        Player
-                    </strong>
-
-                    <span class="card-count">
-                        13 ใบ
-                    </span>
-
-                </div>
-
-                <div class="turn-dot">
-                </div>
-
+            <div class="timer-circle-container">
+                <div id="turnTimer" class="timer-number">20</div>
             </div>
-
-
-            <!-- CENTER -->
-
-            <div class="arena">
-
-                <div class="arena-title">
-                    SLAP WAR
-                </div>
-
-                <div
-                    id="pile"
-                    class="pile"
-                >
-                </div>
-
-                <div
-                    id="pileInfo"
-                    class="pile-info"
-                >
-                    เริ่มเกมด้วย 3♣
-                </div>
-
-                <div
-                    id="gameMessage"
-                    class="game-message"
-                >
-                </div>
-
+            <div id="playerLeft" class="anime-player player-left-pos">
+                <div class="avatar" style="width:38px; height:38px; border-radius:50%; background:#8b5cf6; display:grid; place-items:center;">P2</div>
+                <div class="anime-info-box"><strong class="anime-name">Player</strong><span class="anime-badge card-count">13 ใบ</span></div>
             </div>
-
+            <div class="anime-arena">
+                <div id="pile" class="anime-pile"></div>
+                <div id="pileInfo" class="pile-info">เริ่มกองใหม่</div>
+                <div id="gameMessage" class="game-message">ตาของคุณ!</div>
+            </div>
         </main>
-
-
-        <!-- PLAYER HAND -->
-
-        <section class="bottom-panel">
-
-            <div
-                id="myPlayerInfo"
-                class="my-player-info"
-            >
-
-                <div class="my-avatar">
-                    ME
-                </div>
-
-                <div>
-
-                    <strong id="myName">
-                        Player
-                    </strong>
-
-                    <span id="myCardCount">
-                        13 ใบ
-                    </span>
-
-                </div>
-
+        <section class="anime-bottom-panel">
+            <button id="passBtn" class="anime-pass-btn">ผ่าน</button>
+            <div id="myPlayerInfo" class="my-player-info" style="display:none;">
+                <div class="my-avatar" id="myAvatar">😎</div>
+                <div><strong id="myName">Player</strong><span id="myCardCount">13 ใบ</span></div>
             </div>
-
-
-            <div
-                id="hand"
-                class="hand"
-            >
+            <div id="hand" class="anime-hand"></div>
+            <div class="anime-action-bar">
+                <button id="playBtn" style="padding:10px 20px; border-radius:10px; background:#2563eb; color:white; font-weight:bold; cursor:pointer;">ลงไพ่</button>
+                <button id="slapBtn" style="padding:10px 20px; border-radius:10px; background:#ff315d; color:white; font-weight:bold; cursor:pointer;">SLAP!</button>
             </div>
-
-
-            <!-- ACTION BUTTONS -->
-
-            <div class="action-bar">
-
-                <button
-                    id="passBtn"
-                    class="action pass"
-                >
-                    PASS
-                </button>
-
-                <button
-                    id="playBtn"
-                    class="action play"
-                >
-                    PLAY
-                </button>
-
-                <button
-                    id="slapBtn"
-                    class="action slap"
-                >
-                    SLAP!
-                </button>
-
+            <button class="sort-hand-btn" onclick="sortHandCards()">เรียงไพ่</button>
+            <div class="emotes" style="position:absolute; left:25px; bottom:25px; display:flex; gap:6px;">
+                <button data-emoji="😂" style="width:38px; height:38px; border-radius:50%; background:#1e293b; font-size:18px; cursor:pointer;">😂</button>
+                <button data-emoji="😎" style="width:38px; height:38px; border-radius:50%; background:#1e293b; font-size:18px; cursor:pointer;">😎</button>
+                <button data-emoji="😭" style="width:38px; height:38px; border-radius:50%; background:#1e293b; font-size:18px; cursor:pointer;">😭</button>
+                <button data-emoji="😡" style="width:38px; height:38px; border-radius:50%; background:#1e293b; font-size:18px; cursor:pointer;">😡</button>
+                <button data-emoji="🔥" style="width:38px; height:38px; border-radius:50%; background:#1e293b; font-size:18px; cursor:pointer;">🔥</button>
+                <button data-emoji="💀" style="width:38px; height:38px; border-radius:50%; background:#1e293b; font-size:18px; cursor:pointer;">💀</button>
             </div>
-
-
-            <!-- EMOTES -->
-
-            <div class="emotes">
-
-                <button data-emoji="😂">
-                    😂
-                </button>
-
-                <button data-emoji="😎">
-                    😎
-                </button>
-
-                <button data-emoji="😭">
-                    😭
-                </button>
-
-                <button data-emoji="😡">
-                    😡
-                </button>
-
-                <button data-emoji="😱">
-                    😱
-                </button>
-
-                <button data-emoji="🤡">
-                    🤡
-                </button>
-
-                <button data-emoji="🔥">
-                    🔥
-                </button>
-
-                <button data-emoji="💀">
-                    💀
-                </button>
-
-                <button data-emoji="👏">
-                    👏
-                </button>
-
-            </div>
-
         </section>
-
     </section>
 
-
-    <!-- ================================= -->
-    <!-- RESULT -->
-    <!-- ================================= -->
-
-    <div
-        id="resultModal"
-        class="modal"
-    >
-
-        <div class="result-box">
-
-            <div class="result-small">
-                GAME OVER
-            </div>
-
-            <div
-                id="winnerText"
-                class="winner-text"
-            >
-                WINNER
-            </div>
-
-            <button
-                id="backRoomBtn"
-                class="primary"
-            >
-                กลับห้อง
-            </button>
-
+    <!-- RESULT MODAL -->
+    <div id="resultModal" class="modal">
+        <div style="background:#111827; padding:40px; border-radius:20px; text-align:center;">
+            <div>GAME OVER</div>
+            <div id="winnerText" style="font-size:30px; font-weight:bold; color:#ffc83d; margin:20px 0;">WINNER</div>
+            <button id="backRoomBtn" style="padding:10px 20px; background:#3478ff; color:white; border-radius:10px; border:0; cursor:pointer;">กลับห้อง</button>
         </div>
-
     </div>
 
-
-    <!-- TOAST -->
-
-    <div id="toast">
-    </div>
-
-
-    <!-- SOCKET.IO -->
+    <div id="toast"></div>
 
     <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
-
-    <!-- CONFIG -->
-
     <script src="config.js"></script>
-
-    <!-- GAME -->
-
     <script src="app.js"></script>
 
-</body>
+    <script>
+        let selectedCharacter = { emoji: "😎", name: "COOL GUY" };
 
+        function selectChar(emoji, name) {
+            selectedCharacter = { emoji, name };
+            document.getElementById("characterDisplay").textContent = emoji;
+            document.getElementById("characterLabel").textContent = name;
+            document.getElementById("profileAvatar").textContent = emoji;
+            const myAvatar = document.getElementById("myAvatar");
+            if (myAvatar) myAvatar.textContent = emoji;
+            document.getElementById("characterModal").classList.remove("open");
+            
+            document.querySelectorAll(".character-option").forEach(btn => {
+                btn.classList.toggle("selected", btn.dataset.character === emoji);
+            });
+        }
+
+        const playerNameInput = document.getElementById("playerName");
+        if (playerNameInput) {
+            playerNameInput.addEventListener("input", (e) => {
+                const val = e.target.value;
+                const myName = document.getElementById("myName");
+                if (myName) myName.textContent = val;
+            });
+        }
+
+        const joinRoomBtn = document.getElementById("joinRoomBtn");
+        const roomChoiceModal = document.getElementById("roomChoiceModal");
+        if (joinRoomBtn && roomChoiceModal) {
+            joinRoomBtn.addEventListener("click", () => {
+                roomChoiceModal.classList.add("open");
+            });
+        }
+
+        const quickMatchBtn = document.getElementById("quickMatchBtn");
+        if (quickMatchBtn) {
+            quickMatchBtn.addEventListener("click", () => {
+                roomChoiceModal.classList.remove("open");
+                if (typeof createRoom === "function") createRoom();
+            });
+        }
+
+        const joinCodeBtn = document.getElementById("joinCodeBtn");
+        const joinCodeInput = document.getElementById("joinCodeInput");
+        const roomCodeInput = document.getElementById("roomCode");
+        if (joinCodeBtn && joinCodeInput) {
+            joinCodeBtn.addEventListener("click", () => {
+                const code = joinCodeInput.value.trim().toUpperCase();
+                if (!code) return;
+                if (roomCodeInput) roomCodeInput.value = code;
+                roomChoiceModal.classList.remove("open");
+                if (typeof joinRoom === "function") joinRoom();
+            });
+        }
+
+        const soloPlayBtn = document.getElementById("soloPlayBtn");
+        if (soloPlayBtn) {
+            soloPlayBtn.addEventListener("click", () => {
+                const name = playerNameInput ? playerNameInput.value.trim() || "Player" : "Player";
+                if (typeof startSingleplayer === "function") {
+                    startSingleplayer(name, selectedCharacter.emoji);
+                }
+            });
+        }
+    </script>
+</body>
 </html>
